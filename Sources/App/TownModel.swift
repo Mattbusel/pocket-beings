@@ -13,6 +13,8 @@ final class TownModel: ObservableObject {
     @Published var awayNews: [Deed] = []
     /// Seconds until the player may meddle again.
     @Published private(set) var cooldown: Double = 0
+    /// The demo script opening a being's file, for the review recording.
+    @Published var demoSelected: UUID?
 
     static let secondsPerTick: Double = 2.4
     static let meddleCooldown: Double = 5
@@ -121,8 +123,8 @@ final class TownModel: ObservableObject {
 
     var canMeddle: Bool { Date().timeIntervalSince(lastMeddle) >= Self.meddleCooldown }
 
-    func meddle(_ m: Society.Meddle, on being: Being) {
-        guard canMeddle, var t = town else { return }
+    func meddle(_ m: Society.Meddle, on being: Being, force: Bool = false) {
+        guard canMeddle || force, var t = town else { return }
         Society.meddle(&t, m, on: being)
         UIImpactFeedbackGenerator(style: m == .exile || m == .jail ? .heavy : .medium).impactOccurred()
         lastMeddle = Date()

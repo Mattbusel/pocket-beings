@@ -17,12 +17,30 @@ struct RootView: View {
         .task { await demo() }
     }
 
-    /// For the App Review recording: run for a while, then tell the workflow
-    /// it can stop. Debug builds only.
+    /// For the App Review recording: watch the town, open two files, crown
+    /// one and jail the other, watch some more, then tell the workflow it can
+    /// stop. Debug builds only.
     private func demo() async {
         #if DEBUG
         guard ProcessInfo.processInfo.arguments.contains("-demoAutoplay") else { return }
-        try? await Task.sleep(for: .seconds(70))
+        let wait = { (s: Double) in try? await Task.sleep(for: .seconds(s)) }
+        await wait(22)
+        if let rich = model.town?.beings.max(by: { $0.wallet < $1.wallet }) {
+            model.demoSelected = rich.id
+            await wait(5)
+            model.meddle(.crown, on: rich, force: true)
+            await wait(4)
+            model.demoSelected = nil
+        }
+        await wait(14)
+        if let crook = model.town?.beings.filter({ $0.seat != .crown }).max(by: { $0.heat < $1.heat }) {
+            model.demoSelected = crook.id
+            await wait(5)
+            model.meddle(.jail, on: crook, force: true)
+            await wait(4)
+            model.demoSelected = nil
+        }
+        await wait(16)
         let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         FileManager.default.createFile(atPath: url.appendingPathComponent("demo_done").path, contents: nil)
         #endif
@@ -181,6 +199,9 @@ struct TownView: View {
             if ProcessInfo.processInfo.arguments.contains("-showCard") {
                 selected = model.town?.beings.max { $0.wallet < $1.wallet }?.id
             }
+        }
+        .onChange(of: model.demoSelected) { _, id in
+            withAnimation(.easeOut(duration: 0.2)) { selected = id }
         }
     }
 }

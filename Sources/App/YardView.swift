@@ -211,9 +211,9 @@ final class YardScene: SKScene {
                 let a = list[i], b = list[j]
                 let dx = a.x - b.x, dy = (a.y - b.y) * 0.5
                 let d2 = dx * dx + dy * dy
-                if d2 < 0.006 {
+                if d2 < 0.0144 {
                     let d = max(0.01, sqrt(d2))
-                    let push = (0.08 - d) * 0.15
+                    let push = (0.12 - d) * 0.25
                     if push > 0 {
                         a.x += dx / d * push; b.x -= dx / d * push
                         a.y += dy / d * push * 0.5; b.y -= dy / d * push * 0.5

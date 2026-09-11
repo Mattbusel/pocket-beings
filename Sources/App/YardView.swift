@@ -98,8 +98,11 @@ final class YardScene: SKScene {
 
     private func make(_ b: Being) -> Sprite {
         let s = Sprite()
-        s.x = Double(dice.roll(8, 92)) / 100
-        s.y = Double(dice.roll(15, 85)) / 100
+        // Each newcomer takes the emptiest slot of a loose grid, so seven of
+        // them never start in a heap.
+        let slot = sprites.count % 8
+        s.x = 0.14 + Double(slot % 4) * 0.24 + Double(dice.roll(-4, 4)) / 100
+        s.y = 0.30 + Double(slot / 4) * 0.40 + Double(dice.roll(-6, 6)) / 100
         s.vx = Double(dice.roll(-40, 40)) / 10000
         s.vy = Double(dice.roll(-20, 20)) / 10000
         s.bob = Double(dice.roll(0, 628)) / 100
@@ -188,17 +191,26 @@ final class YardScene: SKScene {
             if s.x > 0.94 { s.x = 0.94; s.vx = -abs(s.vx) }
             if s.y < 0.12 { s.y = 0.12; s.vy = abs(s.vy) }
             if s.y > 0.86 { s.y = 0.86; s.vy = -abs(s.vy) }
-            if s.vx != 0 { s.face.xScale = s.vx > 0 ? 1 : -1 }
         }
 
-        // Bumping into each other is where the personality comes from.
+        // Bumping into each other is where the personality comes from. They
+        // also get pushed apart a little, so nobody stands inside anyone.
         for i in 0..<list.count {
             for j in (i + 1)..<list.count {
                 let a = list[i], b = list[j]
                 let dx = a.x - b.x, dy = (a.y - b.y) * 0.5
-                if dx * dx + dy * dy < 0.0035 {
-                    a.vx = -a.vx; b.vx = -b.vx
-                    a.restUntil = now + 0.5; b.restUntil = now + 0.5
+                let d2 = dx * dx + dy * dy
+                if d2 < 0.006 {
+                    let d = max(0.01, sqrt(d2))
+                    let push = (0.08 - d) * 0.15
+                    if push > 0 {
+                        a.x += dx / d * push; b.x -= dx / d * push
+                        a.y += dy / d * push * 0.5; b.y -= dy / d * push * 0.5
+                    }
+                    if d2 < 0.0035, now >= a.restUntil, now >= b.restUntil {
+                        a.vx = -a.vx; b.vx = -b.vx
+                        a.restUntil = now + 0.5; b.restUntil = now + 0.5
+                    }
                 }
             }
         }

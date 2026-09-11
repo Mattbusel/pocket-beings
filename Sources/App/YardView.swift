@@ -145,25 +145,36 @@ final class YardScene: SKScene {
         return s
     }
 
-    /// Somebody did something: a word over their head.
-    func show(_ deed: Deed, town: Town) {
-        guard let b = town.being(named: deed.actor), let s = sprites[b.id] else { return }
-        let text = Words.bark(for: deed.kind, &dice)
+    private func speak(_ s: Sprite, _ text: String, delay: TimeInterval = 0) {
         s.bubbleText.text = text
         let w = CGFloat(text.count) * 6.6 + 16
         s.bubbleBox.path = CGPath(roundedRect: CGRect(x: -w / 2, y: -10, width: w, height: 20),
                                   cornerWidth: 6, cornerHeight: 6, transform: nil)
         s.bubble.removeAllActions()
-        s.bubble.alpha = 1
-        s.bubble.run(.sequence([.wait(forDuration: 1.8), .fadeOut(withDuration: 0.3)]))
-        s.node.run(.sequence([.scale(to: 1.18, duration: 0.08), .scale(to: 1, duration: 0.12)]))
-        s.restUntil = last + 1.2
+        s.bubble.alpha = 0
+        s.bubble.run(.sequence([.wait(forDuration: delay), .fadeIn(withDuration: 0.1),
+                                .wait(forDuration: 1.8), .fadeOut(withDuration: 0.3)]))
+    }
+
+    /// Somebody did something: a word over their head, and whoever it
+    /// happened to answers back.
+    func show(_ deed: Deed, town: Town) {
+        if let b = town.being(named: deed.actor), let s = sprites[b.id] {
+            speak(s, Words.bark(for: deed.kind, &dice))
+            s.node.run(.sequence([.scale(to: 1.18, duration: 0.08), .scale(to: 1, duration: 0.12)]))
+            s.restUntil = last + 1.2
+            if !deed.target.isEmpty, let t = town.being(named: deed.target), let ts = sprites[t.id] {
+                // Walk toward whoever it happened to.
+                s.vx = (ts.x - s.x) * 0.01
+                s.vy = (ts.y - s.y) * 0.01
+                s.restUntil = 0
+            }
+        }
         if !deed.target.isEmpty, let t = town.being(named: deed.target), let ts = sprites[t.id] {
-            // Walk toward whoever it happened to.
-            ts.restUntil = last + 1.0
-            s.vx = (ts.x - s.x) * 0.01
-            s.vy = (ts.y - s.y) * 0.01
-            s.restUntil = 0
+            speak(ts, Words.reaction(for: deed.kind, &dice), delay: 0.7)
+            ts.restUntil = last + 1.6
+            ts.node.run(.sequence([.wait(forDuration: 0.7), .moveBy(x: 0, y: 6, duration: 0.08),
+                                   .moveBy(x: 0, y: -6, duration: 0.1)]))
         }
     }
 

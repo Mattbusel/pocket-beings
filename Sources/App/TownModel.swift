@@ -28,7 +28,18 @@ final class TownModel: ObservableObject {
 
     var hasSavedTown: Bool { FileManager.default.fileExists(atPath: Self.file.path) }
 
+    /// "Grudge Hollow, day 8", for the CONTINUE button.
+    var savedTownLabel: String {
+        guard let data = try? Data(contentsOf: Self.file),
+              let t = try? JSONDecoder().decode(Town.self, from: data) else { return "" }
+        return "\(t.name), day \(t.day)"
+    }
+
     init() {
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                                               object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.save() }
+        }
         let args = ProcessInfo.processInfo.arguments
         if args.contains("-screenshots") {
             // A fixed town with a morning of history, so the store screenshots
@@ -82,15 +93,14 @@ final class TownModel: ObservableObject {
         clock = Timer.publish(every: Self.secondsPerTick, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in self?.tick() }
-        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
-                                               object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.save() }
-        }
     }
 
     private func tick() {
         guard var t = town else { return }
-        if let deed = Society.step(&t) { latest = deed }
+        if let deed = Society.step(&t) {
+            latest = deed
+            if deed.big { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+        }
         town = t
         cooldown = max(0, Self.meddleCooldown - Date().timeIntervalSince(lastMeddle))
         ticksSinceSave += 1
@@ -114,6 +124,7 @@ final class TownModel: ObservableObject {
     func meddle(_ m: Society.Meddle, on being: Being) {
         guard canMeddle, var t = town else { return }
         Society.meddle(&t, m, on: being)
+        UIImpactFeedbackGenerator(style: m == .exile || m == .jail ? .heavy : .medium).impactOccurred()
         lastMeddle = Date()
         cooldown = Self.meddleCooldown
         latest = t.ledger.first

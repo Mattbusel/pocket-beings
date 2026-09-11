@@ -40,6 +40,21 @@ enum Words {
         "Muddle-on-Sea", "Petty Cross", "Fenwick Bottom", "Squabble Green", "Nether Whinge",
     ]
 
+    /// What the other one says back.
+    static func reaction(for kind: String, _ dice: inout Dice) -> String {
+        let pool: [String]
+        switch kind {
+        case "steal", "heist", "caught", "tax", "fee", "bank": pool = ["hey!", "my coins!", "rude", "I saw that"]
+        case "gift": pool = ["thanks!", "for me?", "aw"]
+        case "friend", "recruit": pool = ["ok!", "yay", "sure"]
+        case "enemy", "refuse", "vote", "exile", "office-lost": pool = ["what?", "fine", "wow", "ok then"]
+        case "jail": pool = ["I want a lawyer", "it's a setup", "noooo"]
+        case "office": pool = ["unbelievable", "rigged", "hm"]
+        default: pool = ["?", "hm", "ok"]
+        }
+        return dice.pick(pool)
+    }
+
     /// What a being mutters over its head while doing something. Short, because
     /// a speech bubble in a yard is read in half a second.
     static func bark(for kind: String, _ dice: inout Dice) -> String {

@@ -36,6 +36,14 @@ struct TitleView: View {
     private let faces = ["📈", "🧶", "😈", "📎", "🦞", "🔮", "👺"]
 
     var body: some View {
+        ZStack {
+            Clouds()
+            titleWindow
+        }
+        .onAppear { bob = true }
+    }
+
+    private var titleWindow: some View {
         VStack {
             Spacer()
             WindowBox(title: "Pocket Beings", trailing: "v1.0") {
@@ -71,8 +79,15 @@ struct TitleView: View {
                         Button("NEW TOWN") { model.newTown() }
                             .buttonStyle(ChunkyButton(fill: UI.coin))
                         if model.hasSavedTown {
-                            Button("CONTINUE") { model.continueTown() }
-                                .buttonStyle(ChunkyButton())
+                            Button {
+                                model.continueTown()
+                            } label: {
+                                VStack(spacing: 1) {
+                                    Text("CONTINUE")
+                                    Text(model.savedTownLabel).font(UI.font(11, .semibold)).opacity(0.7)
+                                }
+                            }
+                            .buttonStyle(ChunkyButton())
                         }
                     }
                     .padding(.horizontal, 12)
@@ -88,7 +103,28 @@ struct TitleView: View {
                 .padding(.horizontal, 40)
                 .padding(.bottom, 24)
         }
-        .onAppear { bob = true }
+    }
+}
+
+/// Three clouds drifting across the sky, slowly, forever.
+struct Clouds: View {
+    @State private var drift = false
+
+    var body: some View {
+        GeometryReader { geo in
+            ForEach(0..<3, id: \.self) { i in
+                Text("☁️")
+                    .font(.system(size: [64, 44, 52][i]))
+                    .opacity(0.85)
+                    .position(x: drift ? geo.size.width + 60 : -60,
+                              y: geo.size.height * [0.10, 0.20, 0.82][i])
+                    .animation(.linear(duration: [48, 70, 58][i]).repeatForever(autoreverses: false)
+                        .delay(Double(i) * -20), value: drift)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .onAppear { drift = true }
     }
 }
 
@@ -103,18 +139,12 @@ struct TownView: View {
                     WindowBox(title: town.name, trailing: "Day \(town.day)") {
                         VStack(spacing: 6) {
                             YardView { id in selected = id }
-                                .frame(height: 300)
+                                .frame(height: 320)
                                 .bevel(raised: false, fill: UI.grass)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
 
-                            Text(model.latest?.text ?? "The town is quiet.")
-                                .font(UI.font(12, .bold))
-                                .foregroundStyle(UI.ink)
-                                .lineLimit(2)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(8)
-                                .bevel(raised: false, fill: UI.paper)
+                            StatsStrip(town: town)
                                 .padding(.horizontal, 8)
 
                             Newspaper(deeds: town.ledger)
@@ -155,6 +185,31 @@ struct TownView: View {
     }
 }
 
+/// The numbers that matter, in one line: who rules, how rich the town is, how
+/// far the Crown has debased the coin, and who is locked up.
+struct StatsStrip: View {
+    let town: Town
+
+    var body: some View {
+        HStack(spacing: 0) {
+            stat("👑", town.holder(of: .crown)?.name ?? "nobody")
+            stat("💰", "\(town.beings.reduce(0) { $0 + $1.wallet })")
+            stat("📈", String(format: "×%.1f", town.priceIndex))
+            stat("🔒", "\(town.beings.filter { $0.isJailed(at: town.tick) }.count)")
+        }
+        .padding(.vertical, 6)
+        .bevel(raised: false, fill: UI.paper)
+    }
+
+    private func stat(_ icon: String, _ value: String) -> some View {
+        HStack(spacing: 4) {
+            Text(icon).font(.system(size: 13))
+            Text(value).font(UI.font(12, .black)).foregroundStyle(UI.ink).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 struct Newspaper: View {
     let deeds: [Deed]
 
@@ -168,10 +223,17 @@ struct Newspaper: View {
                     .padding(.top, 6)
                     .padding(.bottom, 2)
                 ForEach(deeds.prefix(60)) { d in
-                    Text(d.text)
-                        .font(UI.font(12, d.big ? .black : .medium))
-                        .foregroundStyle(d.actor == "You" ? UI.link : UI.ink)
-                        .padding(.vertical, 3)
+                    HStack(alignment: .top, spacing: 6) {
+                        Text("d\(d.tick / 20 + 1)")
+                            .font(UI.font(9, .bold))
+                            .foregroundStyle(UI.ink.opacity(0.35))
+                            .frame(width: 22, alignment: .leading)
+                            .padding(.top, 2)
+                        Text(d.text)
+                            .font(UI.font(12, d.big ? .black : .medium))
+                            .foregroundStyle(d.actor == "You" ? UI.link : UI.ink)
+                    }
+                    .padding(.vertical, 3)
                     Divider()
                 }
             }
@@ -201,6 +263,7 @@ struct BeingCard: View {
                         row("Faction", being.faction.isEmpty ? "none" : being.faction)
                         row("Gang", being.gang.isEmpty ? "none" : being.gang)
                         row("Office", being.seat.map { "\($0.badge) \($0.title)" } ?? "none")
+                        row("Friends", friends)
                         row("Heat", being.heat >= 30 ? "🔥 \(being.heat) (wanted)" : "\(being.heat)")
                         if being.isJailed(at: town.tick) { row("Status", "🔒 in jail") }
                     }
@@ -236,6 +299,14 @@ struct BeingCard: View {
             .padding(.horizontal, 28)
             .transition(.scale(scale: 0.9).combined(with: .opacity))
         }
+    }
+
+    /// Net standing on the ledger: gifts and friendships minus enemies.
+    private var friends: String {
+        let n = town.bonds()[being.name] ?? 0
+        if n > 0 { return "💛 \(n) (liked)" }
+        if n < 0 { return "🖤 \(-n) (grudges)" }
+        return "none yet"
     }
 
     private var rank: String {

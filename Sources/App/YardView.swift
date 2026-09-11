@@ -29,9 +29,18 @@ final class YardScene: SKScene {
     private var dice = Dice(seed: 7)
     private var built = false
 
+    /// Sized up front. A scene made with no size never presents: SpriteView
+    /// shows SKView's grey and nothing else, which is exactly what happened.
+    override init(size: CGSize) {
+        super.init(size: size)
+        scaleMode = .resizeFill
+        backgroundColor = UIColor(UI.grass)
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
     override func didMove(to view: SKView) {
         backgroundColor = UIColor(UI.grass)
-        scaleMode = .resizeFill
         if !built { buildGround() }
     }
 
@@ -215,9 +224,17 @@ final class YardScene: SKScene {
     }
 }
 
-/// Keeps one scene alive across SwiftUI body evaluations.
+/// Keeps one scene alive across SwiftUI body evaluations. Without this the
+/// scene is rebuilt on every update and the sprites jump.
 final class YardHolder: ObservableObject {
-    let scene = YardScene()
+    private var scene: YardScene?
+
+    func scene(size: CGSize) -> YardScene {
+        if let scene { return scene }
+        let made = YardScene(size: CGSize(width: max(1, size.width), height: max(1, size.height)))
+        scene = made
+        return made
+    }
 }
 
 struct YardView: View {
@@ -226,17 +243,20 @@ struct YardView: View {
     var onTap: (UUID) -> Void
 
     var body: some View {
-        SpriteView(scene: holder.scene, options: [.ignoresSiblingOrder])
-            .onAppear {
-                holder.scene.onTap = onTap
-                if let t = model.town { holder.scene.apply(t) }
-            }
-            .onChange(of: model.town) { _, t in
-                if let t { holder.scene.apply(t) }
-            }
-            .onChange(of: model.latest) { _, d in
-                if let d, let t = model.town { holder.scene.show(d, town: t) }
-            }
-            .accessibilityLabel("The yard")
+        GeometryReader { geo in
+            let scene = holder.scene(size: geo.size)
+            SpriteView(scene: scene, options: [.ignoresSiblingOrder])
+                .onAppear {
+                    scene.onTap = onTap
+                    if let t = model.town { scene.apply(t) }
+                }
+                .onChange(of: model.town) { _, t in
+                    if let t { scene.apply(t) }
+                }
+                .onChange(of: model.latest) { _, d in
+                    if let d, let t = model.town { scene.show(d, town: t) }
+                }
+        }
+        .accessibilityLabel("The yard")
     }
 }

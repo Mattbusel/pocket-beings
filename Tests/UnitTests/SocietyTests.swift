@@ -57,7 +57,7 @@ final class SocietyTests: XCTestCase {
         XCTAssertNotNil(printed)
         if let p = printed {
             XCTAssertGreaterThan(p.priceIndex, 1)
-            XCTAssertGreaterThan(p.price(400), 400)
+            XCTAssertGreaterThan(p.seatPrice(.crown), p.seatPrice(.sheriff))
         }
     }
 

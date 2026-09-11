@@ -141,6 +141,14 @@ struct Town: Codable, Equatable {
         Int((Double(base) * priceIndex).rounded())
     }
 
+    /// What a seat costs here, now. Scaled to how rich the town is, so a poor
+    /// town still has elections and a rich one still has to save up.
+    func seatPrice(_ office: Office) -> Int {
+        let wallets = beings.reduce(0) { $0 + $1.wallet }
+        let scale = min(1, max(0.25, Double(wallets) / 2500))
+        return max(60, Int((Double(office.price) * scale * priceIndex).rounded()))
+    }
+
     func being(named name: String) -> Being? {
         beings.first { $0.name == name }
     }
@@ -424,13 +432,13 @@ enum Society {
              }),
 
         Verb(name: "run for office", kind: "office", grows: .office, weight: 6,
-             can: { t, b in b.seat == nil && b.wallet > 100 },
+             can: { t, b in b.seat == nil && b.wallet > 60 },
              run: { t, b in
                  guard let i = index(t, b) else { return false }
-                 let vacant = Office.allCases.filter { t.holder(of: $0) == nil && b.wallet >= t.price($0.price) }
+                 let vacant = Office.allCases.filter { t.holder(of: $0) == nil && b.wallet >= t.seatPrice($0) }
                  if !vacant.isEmpty {
                      let seat = t.dice.pick(vacant)
-                     let cost = t.price(seat.price)
+                     let cost = t.seatPrice(seat)
                      pay(&t, b.id, -cost)
                      t.treasury += cost
                      t.beings[i].seat = seat
@@ -443,7 +451,7 @@ enum Society {
                  guard !contested.isEmpty else { return false }
                  let seat = t.dice.pick(contested)
                  guard let boss = t.holder(of: seat), let bi = index(t, boss) else { return false }
-                 let stake = max(40, t.price(seat.price) / 4)
+                 let stake = max(30, t.seatPrice(seat) / 4)
                  guard b.wallet >= stake else { return false }
                  pay(&t, b.id, -stake)
                  let mine = Double(max(1, b.wallet))
@@ -666,6 +674,19 @@ enum Society {
         // Heat cools, sentences end on their own.
         for i in t.beings.indices where t.beings[i].heat > 0 && t.tick % 3 == 0 {
             t.beings[i].heat -= 1
+        }
+        // Payday. Fines and taxes flow back out of the treasury once a day,
+        // otherwise every coin in town ends up locked in it.
+        if t.tick % 20 == 0, t.treasury >= t.beings.count * 4 {
+            let each = t.treasury / 4 / max(1, t.beings.count)
+            if each > 0 {
+                for b in t.beings { pay(&t, b.id, each) }
+                t.treasury -= each * t.beings.count
+                let mayor = t.holder(of: .crown)?.name ?? "The town"
+                t.ledger.insert(Deed(tick: t.tick, kind: "payday",
+                                     text: "💰 Payday. \(mayor) paid everyone \(each) from the treasury.",
+                                     actor: mayor), at: 0)
+            }
         }
         let free = t.beings.filter { !$0.isJailed(at: t.tick) }
         guard !free.isEmpty else { return nil }

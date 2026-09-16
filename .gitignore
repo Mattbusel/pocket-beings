@@ -16,3 +16,4 @@ AuthKey_*
 *.cer
 Store/private/
 .env
+vid/

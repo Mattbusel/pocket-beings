@@ -15,6 +15,7 @@ final class ScreenshotTests: XCTestCase {
         setupSnapshot(app)
         app.launch()
         sleep(2)
+        dismissSystemSignIn(app)
         snapshot("01_Title")
         app.terminate()
 
@@ -23,6 +24,7 @@ final class ScreenshotTests: XCTestCase {
         app.launchArguments += ["-screenshots"]
         app.launch()
         sleep(6)
+        dismissSystemSignIn(app)
         snapshot("02_Town")
         app.terminate()
 
@@ -31,6 +33,7 @@ final class ScreenshotTests: XCTestCase {
         app.launchArguments += ["-screenshots", "-showCard"]
         app.launch()
         sleep(3)
+        dismissSystemSignIn(app)
         snapshot("03_Meddle")
         app.terminate()
 
@@ -39,6 +42,7 @@ final class ScreenshotTests: XCTestCase {
         app.launchArguments += ["-screenshots", "-showNews"]
         app.launch()
         sleep(3)
+        dismissSystemSignIn(app)
         snapshot("04_Away")
         app.terminate()
 
@@ -49,6 +53,23 @@ final class ScreenshotTests: XCTestCase {
         app.launchArguments += ["-screenshots", "-showPaywall"]
         app.launch()
         sleep(3)
+        dismissSystemSignIn(app)
         snapshot("05_Paywall")
+    }
+
+    /// The CI simulator is not signed in to an Apple Account, and iOS 26 puts up a
+    /// "Sign in to Apple Account" system prompt over the app. It is not the app's doing
+    /// (Pro stays off StoreKit in snapshot runs); cancel it so it is not in the shot.
+    private func dismissSystemSignIn(_ app: XCUIApplication) {
+        let hosts = [XCUIApplication(bundleIdentifier: "com.apple.springboard"), app]
+        for _ in 0..<3 {
+            var tapped = false
+            for host in hosts {
+                let cancel = host.buttons["Cancel"]
+                if cancel.waitForExistence(timeout: 1.5) && cancel.isHittable { cancel.tap(); tapped = true }
+            }
+            if !tapped { return }
+            sleep(1)
+        }
     }
 }

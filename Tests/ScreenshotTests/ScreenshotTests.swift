@@ -40,5 +40,15 @@ final class ScreenshotTests: XCTestCase {
         app.launch()
         sleep(3)
         snapshot("04_Away")
+        app.terminate()
+
+        // The Big Hand's paywall, for the in-app purchase review screenshot.
+        // Not one of the store screenshots: it is deleted before committing.
+        app = XCUIApplication()
+        setupSnapshot(app)
+        app.launchArguments += ["-screenshots", "-showPaywall"]
+        app.launch()
+        sleep(3)
+        snapshot("05_Paywall")
     }
 }

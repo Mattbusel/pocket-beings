@@ -715,8 +715,17 @@ enum Society {
 
     enum Meddle: String, CaseIterable, Identifiable {
         case gift, rob, jail, crown, exile
+        /// The Big Hand.
+        case pardon, frame, deputise, rain
 
         var id: String { rawValue }
+
+        var isPro: Bool {
+            switch self {
+            case .pardon, .frame, .deputise, .rain: return true
+            default: return false
+            }
+        }
 
         var label: String {
             switch self {
@@ -725,6 +734,10 @@ enum Society {
             case .jail: return "Jail"
             case .crown: return "Crown"
             case .exile: return "Exile"
+            case .pardon: return "Pardon"
+            case .frame: return "Frame"
+            case .deputise: return "Deputise"
+            case .rain: return "Rain 20"
             }
         }
 
@@ -735,6 +748,21 @@ enum Society {
             case .jail: return "🔒"
             case .crown: return "👑"
             case .exile: return "🚪"
+            case .pardon: return "🕊️"
+            case .frame: return "🧤"
+            case .deputise: return "⭐️"
+            case .rain: return "💸"
+            }
+        }
+
+        /// One line for the Big Hand window.
+        var blurb: String {
+            switch self {
+            case .pardon: return "Spring anyone from jail and wipe their record."
+            case .frame: return "Plant evidence. They are wanted by morning."
+            case .deputise: return "Pin the Sheriff's star on whoever you like."
+            case .rain: return "Drop 20 coins on every single being."
+            default: return ""
             }
         }
     }
@@ -775,6 +803,27 @@ enum Society {
             let fresh = replace(&t, target)
             say(&t, "🚪 \(target.name) was exiled. \(fresh.face) \(fresh.name) moved into the empty house.",
                 kind: "exile", actor: hand, target: target.name, big: true)
+        case .pardon:
+            if let i = index(t, target) {
+                t.beings[i].jailedUntil = 0
+                t.beings[i].heat = 0
+            }
+            say(&t, "🕊️ \(target.name) was pardoned by a hand from the sky. Record wiped.", kind: "pardon",
+                actor: hand, target: target.name, big: true)
+        case .frame:
+            heat(&t, target.id, 60)
+            say(&t, "🧤 Evidence turned up in \(target.name)'s house. Nobody knows how.", kind: "frame",
+                actor: hand, target: target.name, big: true)
+        case .deputise:
+            for i in t.beings.indices where t.beings[i].seat == .sheriff { t.beings[i].seat = nil }
+            if let i = index(t, target) { t.beings[i].seat = .sheriff }
+            say(&t, "⭐️ \(target.name) was handed the Sheriff's star by a hand from the sky.", kind: "office",
+                actor: hand, target: target.name, big: true)
+        case .rain:
+            for i in t.beings.indices { t.beings[i].wallet += 20 }
+            t.minted += 20 * t.beings.count
+            say(&t, "💸 It rained coins. Everyone got 20, \(target.name) got wet.", kind: "gift",
+                actor: hand, target: target.name, amount: 20 * t.beings.count, big: true)
         }
     }
 }

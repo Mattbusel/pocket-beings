@@ -18,6 +18,12 @@ final class TownModel: ObservableObject {
 
     static let secondsPerTick: Double = 2.4
     static let meddleCooldown: Double = 5
+    /// The Big Hand rests for less.
+    static let fastCooldown: Double = 2
+
+    /// Set from Pro: whether the hand rests two seconds or five.
+    var fastHand = false
+    private var handRest: Double { fastHand ? Self.fastCooldown : Self.meddleCooldown }
 
     private var clock: AnyCancellable?
     private var lastMeddle = Date.distantPast
@@ -104,7 +110,7 @@ final class TownModel: ObservableObject {
             if deed.big { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
         }
         town = t
-        cooldown = max(0, Self.meddleCooldown - Date().timeIntervalSince(lastMeddle))
+        cooldown = max(0, handRest - Date().timeIntervalSince(lastMeddle))
         ticksSinceSave += 1
         if ticksSinceSave >= 5 { save() }
     }
@@ -121,14 +127,27 @@ final class TownModel: ObservableObject {
 
     // MARK: the player
 
-    var canMeddle: Bool { Date().timeIntervalSince(lastMeddle) >= Self.meddleCooldown }
+    var canMeddle: Bool { Date().timeIntervalSince(lastMeddle) >= handRest }
 
     func meddle(_ m: Society.Meddle, on being: Being, force: Bool = false) {
         guard canMeddle || force, var t = town else { return }
         Society.meddle(&t, m, on: being)
         UIImpactFeedbackGenerator(style: m == .exile || m == .jail ? .heavy : .medium).impactOccurred()
         lastMeddle = Date()
-        cooldown = Self.meddleCooldown
+        cooldown = handRest
+        latest = t.ledger.first
+        town = t
+        save()
+    }
+
+    /// The Big Hand: call the town something else.
+    func rename(_ name: String) {
+        let clean = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(24))
+        guard !clean.isEmpty, var t = town, clean != t.name else { return }
+        let old = t.name
+        t.name = clean
+        Society.say(&t, "🪧 \(old) is now called \(clean). The sign painter is thrilled.", kind: "rename",
+                    actor: Being(name: "You", face: "🫵", hue: 0), big: true)
         latest = t.ledger.first
         town = t
         save()

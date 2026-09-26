@@ -3,6 +3,7 @@ import SwiftUI
 /// Two screens: the title, and the town. Everything else is a window on top.
 struct RootView: View {
     @EnvironmentObject private var model: TownModel
+    @EnvironmentObject private var pro: Pro
 
     var body: some View {
         ZStack {
@@ -12,8 +13,14 @@ struct RootView: View {
             } else {
                 TownView().transition(.opacity)
             }
+            if pro.showPaywall {
+                PaywallWindow().zIndex(10)
+            }
         }
         .animation(.easeOut(duration: 0.25), value: model.town == nil)
+        .animation(.easeOut(duration: 0.2), value: pro.showPaywall)
+        .onAppear { model.fastHand = pro.unlocked }
+        .onChange(of: pro.unlocked) { _, now in model.fastHand = now }
         .task { await demo() }
     }
 
@@ -49,6 +56,7 @@ struct RootView: View {
 
 struct TitleView: View {
     @EnvironmentObject private var model: TownModel
+    @EnvironmentObject private var pro: Pro
     @State private var bob = false
 
     private let faces = ["📈", "🧶", "😈", "📎", "🦞", "🔮", "👺"]
@@ -64,7 +72,7 @@ struct TitleView: View {
     private var titleWindow: some View {
         VStack {
             Spacer()
-            WindowBox(title: "Pocket Beings", trailing: "v1.0") {
+            WindowBox(title: "Pocket Beings", trailing: "v" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1")) {
                 VStack(spacing: 16) {
                     HStack(spacing: 6) {
                         ForEach(Array(faces.enumerated()), id: \.offset) { i, f in
@@ -107,6 +115,16 @@ struct TitleView: View {
                             }
                             .buttonStyle(ChunkyButton())
                         }
+                        Button {
+                            pro.showPaywall = true
+                        } label: {
+                            Text(pro.unlocked ? "🫵 The Big Hand is yours" : "🫵 The Big Hand: meddle harder")
+                                .font(UI.font(12, .black))
+                                .foregroundStyle(UI.link)
+                                .underline()
+                        }
+                        .disabled(pro.unlocked)
+                        .padding(.top, 2)
                     }
                     .padding(.horizontal, 12)
                     .padding(.bottom, 14)
@@ -148,7 +166,10 @@ struct Clouds: View {
 
 struct TownView: View {
     @EnvironmentObject private var model: TownModel
+    @EnvironmentObject private var pro: Pro
     @State private var selected: UUID?
+    @State private var renaming = false
+    @State private var newName = ""
 
     var body: some View {
         ZStack {
@@ -173,6 +194,17 @@ struct TownView: View {
                                     .font(UI.font(12, .semibold))
                                     .foregroundStyle(UI.ink.opacity(0.7))
                                 Spacer()
+                                Button(pro.unlocked ? "RENAME" : "🔒 RENAME") {
+                                    if pro.unlocked {
+                                        newName = town.name
+                                        renaming = true
+                                    } else {
+                                        pro.showPaywall = true
+                                    }
+                                }
+                                .font(UI.font(12, .black))
+                                .foregroundStyle(UI.link)
+                                .padding(.trailing, 10)
                                 Button("TITLE") { model.leaveTown() }
                                     .font(UI.font(12, .black))
                                     .foregroundStyle(UI.link)
@@ -194,6 +226,11 @@ struct TownView: View {
                     AwayNews(deeds: model.awayNews) { model.awayNews = [] }
                 }
             }
+        }
+        .alert("Name your town", isPresented: $renaming) {
+            TextField("Town name", text: $newName)
+            Button("Rename") { model.rename(newName) }
+            Button("Cancel", role: .cancel) {}
         }
         .onAppear {
             if ProcessInfo.processInfo.arguments.contains("-showCard") {
@@ -269,6 +306,7 @@ struct Newspaper: View {
 /// One being, in a window, with five buttons to ruin its day.
 struct BeingCard: View {
     @EnvironmentObject private var model: TownModel
+    @EnvironmentObject private var pro: Pro
     let being: Being
     let town: Town
     var onClose: () -> Void
@@ -293,18 +331,23 @@ struct BeingCard: View {
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                         ForEach(Society.Meddle.allCases) { m in
+                            let locked = m.isPro && !pro.unlocked
                             Button {
+                                guard pro.allows(m) else { return }
                                 model.meddle(m, on: being)
                                 if m == .exile { onClose() }
                             } label: {
                                 VStack(spacing: 2) {
-                                    Text(m.icon).font(.system(size: 22))
+                                    Text(m.icon).font(.system(size: 22)).opacity(locked ? 0.45 : 1)
                                     Text(m.label).font(UI.font(11, .black))
+                                }
+                                .overlay(alignment: .topTrailing) {
+                                    if locked { Text("🔒").font(.system(size: 10)).offset(x: 10, y: -6) }
                                 }
                             }
                             .buttonStyle(ChunkyButton())
-                            .disabled(!model.canMeddle)
-                            .opacity(model.canMeddle ? 1 : 0.5)
+                            .disabled(!model.canMeddle && !locked)
+                            .opacity(model.canMeddle || locked ? 1 : 0.5)
                         }
                         Button("CLOSE", action: onClose)
                             .buttonStyle(ChunkyButton(fill: UI.coin))

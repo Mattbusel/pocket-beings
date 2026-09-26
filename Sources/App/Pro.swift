@@ -30,7 +30,10 @@ final class Pro: ObservableObject {
     /// touches StoreKit and shows the free game.
     init() {
         let args = ProcessInfo.processInfo.arguments
-        forced = args.contains("-screenshots") || args.contains("-demoAutoplay")
+        // fastlane's setupSnapshot adds -FASTLANE_SNAPSHOT to every launch, including the title
+        // shot that has no -screenshots: without it StoreKit asks the simulator to sign in, and
+        // that system alert sits over every later screenshot.
+        forced = args.contains("-screenshots") || args.contains("-demoAutoplay") || args.contains("-FASTLANE_SNAPSHOT")
         if forced {
             unlocked = false
             showPaywall = args.contains("-showPaywall")

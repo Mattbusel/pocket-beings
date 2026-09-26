@@ -17,3 +17,4 @@ AuthKey_*
 Store/private/
 .env
 vid/
+__pycache__/

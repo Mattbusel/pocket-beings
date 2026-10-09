@@ -98,6 +98,8 @@ struct Being: Codable, Identifiable, Equatable {
     /// Tick the sentence ends. Zero when free.
     var jailedUntil: Int = 0
     var seat: Office? = nil
+    /// Moved in at the player's invitation (1.2). Optional, so 1.1 saves decode.
+    var invited: Bool? = nil
 
     func isJailed(at tick: Int) -> Bool { jailedUntil > tick }
 }
@@ -127,6 +129,10 @@ struct Town: Codable, Equatable {
     var minted: Int = 0
     var dice: Dice
     var savedAt: Date = Date()
+    /// Laws in force (1.2). Optional, so 1.1 saves decode.
+    var laws: [String]? = nil
+    /// The hall of records (1.2). Optional, so 1.1 saves decode.
+    var records: Records? = nil
 
     static let ledgerCap = 400
     static let population = 7
@@ -344,7 +350,7 @@ enum Society {
                  let marks = others(t, b).filter { $0.wallet > 4 && robbable(t, $0) }
                  let victim = t.dice.pick(marks)
                  let amt = min(t.dice.roll(5, 40), victim.wallet)
-                 if t.dice.chance(0.3) {
+                 if t.dice.chance(t.has(.toughOnCrime) || t.has(.martialLaw) ? 0.5 : 0.3) {
                      let fine = min(amt, b.wallet)
                      pay(&t, b.id, -fine)
                      pay(&t, victim.id, fine)
@@ -555,9 +561,9 @@ enum Society {
              }),
 
         Verb(name: "arrest someone", kind: "arrest", grows: .office, weight: 9,
-             can: { t, b in b.seat == .sheriff && others(t, b).contains { $0.heat >= 30 } },
+             can: { t, b in b.seat == .sheriff && others(t, b).contains { $0.heat >= arrestHeat(t) } },
              run: { t, b in
-                 let crook = t.dice.pick(others(t, b).filter { $0.heat >= 30 })
+                 let crook = t.dice.pick(others(t, b).filter { $0.heat >= arrestHeat(t) })
                  let fine = crook.wallet / 2
                  pay(&t, crook.id, -fine)
                  t.treasury += fine
@@ -642,6 +648,22 @@ enum Society {
              }),
     ]
 
+    /// Heat at which the Sheriff makes an arrest.
+    static func arrestHeat(_ t: Town) -> Int { t.has(.toughOnCrime) || t.has(.martialLaw) ? 20 : 30 }
+
+    /// How the laws in force tilt each verb.
+    static func lawWeight(_ t: Town, _ kind: String) -> Double {
+        guard let laws = t.laws, !laws.isEmpty else { return 1 }
+        var w = 1.0
+        if t.has(.noGambling) && kind == "gamble" { w = 0 }
+        if t.has(.freeMarket) && kind == "fee" { w *= 2 }
+        if t.has(.martialLaw) {
+            if kind == "crime" || kind == "steal" { w *= 0.3 }
+            if kind == "arrest" { w *= 2 }
+        }
+        return w
+    }
+
     /// Pick a verb, leaning toward whatever this being is currently worst at.
     static func chooseVerb(_ t: inout Town, _ b: Being) -> Verb? {
         let legal = verbs.filter { $0.can(t, b) }
@@ -650,13 +672,14 @@ enum Society {
         var rank: [Facet: Int] = [:]
         for (i, f) in gaps.enumerated() { rank[f] = i }
         let weighted: [(Verb, Double)] = legal.map { v in
-            var w = v.weight
+            var w = v.weight * lawWeight(t, v.kind)
             if let g = v.grows, let r = rank[g] {
                 w *= r == 0 ? 3.5 : r == 1 ? 2.2 : r == 2 ? 1.4 : 0.8
             }
             return (v, w)
         }
         let total = weighted.reduce(0) { $0 + $1.1 }
+        guard total > 0 else { return nil }
         var r = Double.random(in: 0..<total, using: &t.dice)
         for (v, w) in weighted {
             r -= w
@@ -678,7 +701,7 @@ enum Society {
         // Payday. Fines and taxes flow back out of the treasury once a day,
         // otherwise every coin in town ends up locked in it.
         if t.tick % 20 == 0, t.treasury >= t.beings.count * 4 {
-            let each = t.treasury / 4 / max(1, t.beings.count)
+            let each = t.treasury / (t.has(.basicCoin) ? 2 : 4) / max(1, t.beings.count)
             if each > 0 {
                 for b in t.beings { pay(&t, b.id, each) }
                 t.treasury -= each * t.beings.count
@@ -688,6 +711,11 @@ enum Society {
                                      actor: mayor), at: 0)
             }
         }
+        if t.has(.termLimits), t.tick % 60 == 0, t.beings.contains(where: { $0.seat != nil }) {
+            for i in t.beings.indices { t.beings[i].seat = nil }
+            t.ledger.insert(Deed(tick: t.tick, kind: "terms", text: "⏳ Term limits. Every seat in town is empty again.",
+                                 actor: "The law", big: true), at: 0)
+        }
         let free = t.beings.filter { !$0.isJailed(at: t.tick) }
         guard !free.isEmpty else { return nil }
         let actor = t.dice.pick(free)
@@ -696,7 +724,16 @@ enum Society {
             guard let verb = chooseVerb(&t, actor) else { return nil }
             if verb.run(&t, actor) { break }
         }
-        return t.ledger.first?.id == before ? nil : t.ledger.first
+        let deed = t.ledger.first?.id == before ? nil : t.ledger.first
+        if let deed { noteRecord(&t, deed) }
+        return deed
+    }
+
+    /// Keep the hall of records up to date with one deed.
+    static func noteRecord(_ t: inout Town, _ d: Deed) {
+        var r = t.records ?? Records()
+        r.note(d, town: t)
+        t.records = r
     }
 
     /// Run the ticks the town missed while the app was closed.
@@ -825,5 +862,6 @@ enum Society {
             say(&t, "💸 It rained coins. Everyone got 20, \(target.name) got wet.", kind: "gift",
                 actor: hand, target: target.name, amount: 20 * t.beings.count, big: true)
         }
+        if let d = t.ledger.first { noteRecord(&t, d) }
     }
 }

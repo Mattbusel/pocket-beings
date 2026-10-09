@@ -35,11 +35,13 @@ final class Pro: ObservableObject {
         // that system alert sits over every later screenshot.
         forced = args.contains("-screenshots") || args.contains("-demoAutoplay") || args.contains("-FASTLANE_SNAPSHOT")
         if forced {
-            unlocked = false
+            // -proOn: the laws screenshot shows laws in force. Never set outside snapshot runs.
+            unlocked = args.contains("-proOn")
             showPaywall = args.contains("-showPaywall")
             return
         }
         unlocked = UserDefaults.standard.bool(forKey: key)
+        Shared.bigHand = unlocked
         updates = Task { [weak self] in
             for await result in Transaction.updates { await self?.apply(result) }
         }
@@ -113,6 +115,7 @@ final class Pro: ObservableObject {
     }
 
     private func grant() {
+        Shared.bigHand = true
         guard !unlocked else { return }
         unlocked = true
         showPaywall = false
@@ -120,6 +123,7 @@ final class Pro: ObservableObject {
     }
 
     private func revoke() {
+        Shared.bigHand = false
         unlocked = false
         UserDefaults.standard.set(false, forKey: key)
     }

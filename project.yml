@@ -18,7 +18,7 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "1.1"
+    MARKETING_VERSION: "1.2"
     CURRENT_PROJECT_VERSION: "2"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Manual
@@ -30,6 +30,8 @@ targets:
   PocketBeings:
     type: application
     platform: iOS
+    dependencies:
+      - target: PocketBeingsWidgets
 
     sources:
       - path: Sources
@@ -46,14 +48,22 @@ targets:
         PRODUCT_NAME: PocketBeings
         INFOPLIST_KEY_CFBundleDisplayName: Pocket Beings
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-SnowDay AppIcon-NightMarket AppIcon-BeachTown AppIcon-MarsColony"
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        PROVISIONING_PROFILE_SPECIFIER: "${APP_PROFILE}"
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIUserInterfaceStyle: Light
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
 
-    # No entitlements file. No Game Center in v1: an app with Game Center
-    # config that has never been published cannot be added to a review
-    # submission, and the API only says "not in valid state".
+    # Still no Game Center: an app with Game Center config that has never been
+    # published cannot be added to a review submission. The one entitlement is the
+    # app group, so the widget reads the same town file.
+    entitlements:
+      path: Resources/PocketBeings.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.mattbusel.pocketbeings
 
     info:
       path: Resources/Info.plist
@@ -69,6 +79,36 @@ targets:
         # No custom cryptography. Declared so an upload never parks in
         # "Missing Compliance".
         ITSAppUsesNonExemptEncryption: false
+
+  PocketBeingsWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+      - path: Sources/Engine
+      - path: Sources/Shared
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    entitlements:
+      path: Widgets/PocketBeingsWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.mattbusel.pocketbeings
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mattbusel.pocketbeings.widgets
+        PRODUCT_NAME: PocketBeingsWidgets
+        PROVISIONING_PROFILE_SPECIFIER: "${EXT_PROFILE}"
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Pocket Beings
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   PocketBeingsTests:
     type: bundle.unit-test

@@ -11,50 +11,38 @@ final class ScreenshotTests: XCTestCase {
 
     @MainActor
     func testCaptureAppStoreScreenshots() throws {
+        // Warm-up launch: the first launch after install can draw a blank frame.
         var app = XCUIApplication()
         setupSnapshot(app)
         app.launch()
         sleep(2)
         dismissSystemSignIn(app)
-        snapshot("01_Title")
+        snapshot("00_Title")
         app.terminate()
 
-        app = XCUIApplication()
-        setupSnapshot(app)
-        app.launchArguments += ["-screenshots"]
-        app.launch()
-        sleep(6)
-        dismissSystemSignIn(app)
-        snapshot("02_Town")
-        app.terminate()
-
-        app = XCUIApplication()
-        setupSnapshot(app)
-        app.launchArguments += ["-screenshots", "-showCard"]
-        app.launch()
-        sleep(3)
-        dismissSystemSignIn(app)
-        snapshot("03_Meddle")
-        app.terminate()
-
-        app = XCUIApplication()
-        setupSnapshot(app)
-        app.launchArguments += ["-screenshots", "-showNews"]
-        app.launch()
-        sleep(3)
-        dismissSystemSignIn(app)
-        snapshot("04_Away")
-        app.terminate()
-
-        // The Big Hand's paywall, for the in-app purchase review screenshot.
-        // Not one of the store screenshots: it is deleted before committing.
-        app = XCUIApplication()
-        setupSnapshot(app)
-        app.launchArguments += ["-screenshots", "-showPaywall"]
-        app.launch()
-        sleep(3)
-        dismissSystemSignIn(app)
-        snapshot("05_Paywall")
+        let shots: [(String, [String])] = [
+            ("01_Town", []),
+            ("02_Wish", ["-showWish"]),
+            ("03_Meddle", ["-showCard"]),
+            ("04_Miracles", ["-showMiracles"]),
+            ("05_Invite", ["-showInvite", "-invited"]),
+            ("06_Laws", ["-showLaws", "-proOn"]),
+            ("07_Yards", ["-showYards", "-yard", "night", "-ownYards"]),
+            ("08_Start", ["-showStart"]),
+            ("09_Records", ["-showRecords"]),
+            ("10_Away", ["-showNews", "-yard", "snow"]),
+            ("11_Paywall", ["-showPaywall"]),
+        ]
+        for (name, args) in shots {
+            app = XCUIApplication()
+            setupSnapshot(app)
+            app.launchArguments += ["-screenshots"] + args
+            app.launch()
+            sleep(name == "01_Town" ? 6 : 4)
+            dismissSystemSignIn(app)
+            snapshot(name)
+            app.terminate()
+        }
     }
 
     /// The CI simulator is not signed in to an Apple Account, and iOS 26 puts up a

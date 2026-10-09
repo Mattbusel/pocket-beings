@@ -4,6 +4,8 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject private var model: TownModel
     @EnvironmentObject private var pro: Pro
+    @EnvironmentObject private var player: Player
+    @EnvironmentObject private var extras: Extras
 
     var body: some View {
         ZStack {
@@ -19,7 +21,21 @@ struct RootView: View {
         }
         .animation(.easeOut(duration: 0.25), value: model.town == nil)
         .animation(.easeOut(duration: 0.2), value: pro.showPaywall)
-        .onAppear { model.fastHand = pro.unlocked }
+        .onAppear {
+            model.fastHand = pro.unlocked
+            model.onTurn = { [weak player] t in player?.check(town: t) }
+            extras.onConsumable = { [weak player] id in
+                if id == Extras.miraclesID { player?.addMiracles(5) }
+                if id == Extras.invitesID { player?.addInvites(3) }
+            }
+            extras.start()
+            if let t = model.town { player.refreshWish(town: t) }
+            Task { await player.scheduleReminders() }
+        }
+        .onChange(of: model.town?.name) { _, _ in if let t = model.town { player.refreshWish(town: t) } }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            if let t = model.town { player.refreshWish(town: t) }
+        }
         .onChange(of: pro.unlocked) { _, now in model.fastHand = now }
         .task { await demo() }
     }
@@ -167,9 +183,12 @@ struct Clouds: View {
 struct TownView: View {
     @EnvironmentObject private var model: TownModel
     @EnvironmentObject private var pro: Pro
+    @EnvironmentObject private var player: Player
     @State private var selected: UUID?
     @State private var renaming = false
     @State private var newName = ""
+    @State private var panel: Panel?
+    @State private var startOpen = false
 
     var body: some View {
         ZStack {
@@ -178,10 +197,13 @@ struct TownView: View {
                     WindowBox(title: town.name, trailing: "Day \(town.day)") {
                         VStack(spacing: 6) {
                             YardView { id in selected = id }
-                                .frame(height: 320)
+                                .frame(height: 300)
                                 .bevel(raised: false, fill: UI.grass)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
+
+                            WishStrip { panel = .wish }
+                                .padding(.horizontal, 8)
 
                             StatsStrip(town: town)
                                 .padding(.horizontal, 8)
@@ -204,13 +226,12 @@ struct TownView: View {
                                 }
                                 .font(UI.font(12, .black))
                                 .foregroundStyle(UI.link)
-                                .padding(.trailing, 10)
-                                Button("TITLE") { model.leaveTown() }
-                                    .font(UI.font(12, .black))
-                                    .foregroundStyle(UI.link)
                             }
                             .padding(.horizontal, 12)
-                            .padding(.bottom, 8)
+
+                            Taskbar(startOpen: $startOpen, town: town)
+                                .padding(.horizontal, 6)
+                                .padding(.bottom, 6)
                         }
                     }
                     .padding(.horizontal, 6)
@@ -218,8 +239,42 @@ struct TownView: View {
                     Spacer(minLength: 0)
                 }
 
+                if startOpen {
+                    Color.black.opacity(0.001).ignoresSafeArea()
+                        .onTapGesture { withAnimation(.easeOut(duration: 0.15)) { startOpen = false } }
+                    VStack {
+                        Spacer()
+                        HStack {
+                            StartMenu(open: { p in startOpen = false; panel = p }, close: { startOpen = false })
+                            Spacer()
+                        }
+                        .padding(.leading, 12)
+                        .padding(.bottom, 58)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
                 if let id = selected, let b = model.being(id) {
                     BeingCard(being: b, town: town) { selected = nil }
+                }
+
+                if let p = panel {
+                    Group {
+                        switch p {
+                        case .wish: WishWindow(town: town) { panel = nil }
+                        case .miracles: MiracleWindow { panel = nil }
+                        case .invite: InviteWindow(town: town) { panel = nil }
+                        case .laws: LawsWindow(town: town) { panel = nil }
+                        case .records: RecordsWindow(town: town) { panel = nil }
+                        case .yards: YardsWindow { panel = nil }
+                        case .settings: SettingsWindow { panel = nil }
+                        }
+                    }
+                    .zIndex(5)
+                }
+
+                if let w = player.wishBanner {
+                    WishGranted(wish: w) { player.wishBanner = nil }.zIndex(6)
                 }
 
                 if !model.awayNews.isEmpty {
@@ -232,9 +287,16 @@ struct TownView: View {
             Button("Rename") { model.rename(newName) }
             Button("Cancel", role: .cancel) {}
         }
+        .animation(.easeOut(duration: 0.18), value: panel)
         .onAppear {
-            if ProcessInfo.processInfo.arguments.contains("-showCard") {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("-showCard") {
                 selected = model.town?.beings.max { $0.wallet < $1.wallet }?.id
+            }
+            if args.contains("-showStart") { startOpen = true }
+            for (flag, p) in [("-showWish", Panel.wish), ("-showMiracles", .miracles), ("-showInvite", .invite),
+                              ("-showLaws", .laws), ("-showRecords", .records), ("-showYards", .yards)] where args.contains(flag) {
+                panel = p
             }
         }
         .onChange(of: model.demoSelected) { _, id in

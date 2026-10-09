@@ -163,6 +163,9 @@ struct PaywallWindow: View {
                         }
                         feature("⏱️", "Faster hand", "Meddle every 2 seconds instead of 5.")
                         feature("🪧", "Name your town", "Rename it whatever you like, whenever you like.")
+                        feature("📜", "Town laws", "Pass up to three laws. The town lives by them.")
+                        feature("✨", "Two free miracles a day", "Instead of one.")
+                        feature("🏛️", "Town Hall widget", "Headlines, the Crown and the jail on your Home Screen.")
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -123,7 +123,7 @@ final class Player: ObservableObject {
             content.title = "Today's wish is waiting"
             content.body = streak > 1 ? "Keep the \(streak)-day streak going. The town has been busy without you." : "The town has been busy without you. Come and meddle."
             content.sound = .default
-            c.add(UNNotificationRequest(identifier: "pb-wish-\(i)", content: content,
+            try? await c.add(UNNotificationRequest(identifier: "pb-wish-\(i)", content: content,
                                         trigger: UNCalendarNotificationTrigger(dateMatching: cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire), repeats: false)))
         }
     }

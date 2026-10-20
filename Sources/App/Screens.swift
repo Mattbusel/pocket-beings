@@ -63,6 +63,15 @@ struct RootView: View {
             if club.active { Backup.save() }
         }
         .onOpenURL { url in open(url) }
+        // Promoted in-app purchases tapped on the App Store page arrive here.
+        .task {
+            for await intent in PurchaseIntent.intents {
+                let id = intent.product.id
+                if Club.ids.contains(id) { pro.showClub = true; await club.buy(id) }
+                else if id == Pro.productID { pro.showPaywall = true; await pro.buy() }
+                else { await extras.buy(id) }
+            }
+        }
         .task { await demo() }
         .task { await tour() }
     }

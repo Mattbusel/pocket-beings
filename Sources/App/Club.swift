@@ -161,24 +161,18 @@ struct ClubWindow: View {
                             Text("🏛️").font(.system(size: 46)).scaleEffect(shine ? 1.06 : 0.96)
                                 .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: shine)
                             Text("JOIN THE TOWN CLUB").font(UI.font(21, .black)).kerning(1.5).foregroundStyle(UI.ink)
-                            Text("More to do every month, for as long as you are a member.")
+                            Text("Everything in The Big Hand, plus a chest of 25 miracles every month, double daily gifts, every yard, Club miracles, the almanac and iCloud backup. All the details are below.")
                                 .font(UI.font(12, .semibold)).foregroundStyle(UI.ink.opacity(0.7)).multilineTextAlignment(.center)
                         }
-                        VStack(alignment: .leading, spacing: 7) {
-                            ForEach(Array(Self.perks.enumerated()), id: \.offset) { _, p in
-                                HStack(alignment: .top, spacing: 8) {
-                                    Text(p.0).font(.system(size: 17)).frame(width: 26)
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(p.1).font(UI.font(13, .black)).foregroundStyle(UI.ink)
-                                        Text(p.2).font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7))
-                                    }
-                                }
-                            }
-                        }
-                        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .bevel(raised: false, fill: UI.paper)
 
                         if club.active { memberBox } else { plans }
+                        Text(legal).font(UI.font(9.5, .medium)).foregroundStyle(UI.ink.opacity(0.6)).multilineTextAlignment(.center)
+                        HStack(spacing: 16) {
+                            Link("Terms of Use", destination: Club.terms)
+                            Link("Privacy Policy", destination: Club.privacy)
+                        }
+                        .font(UI.font(11, .black)).foregroundStyle(UI.link)
+
 
                         if let m = club.message {
                             Text(m).font(UI.font(11, .bold)).foregroundStyle(UI.red).multilineTextAlignment(.center)
@@ -201,13 +195,19 @@ struct ClubWindow: View {
                             }
                         }
 
-                        Text(legal).font(UI.font(9.5, .medium)).foregroundStyle(UI.ink.opacity(0.6)).multilineTextAlignment(.center)
-                        HStack(spacing: 16) {
-                            Link("Terms of Use", destination: Club.terms)
-                            Link("Privacy Policy", destination: Club.privacy)
+                        VStack(alignment: .leading, spacing: 7) {
+                            ForEach(Array(Self.perks.enumerated()), id: \.offset) { _, p in
+                                HStack(alignment: .top, spacing: 8) {
+                                    Text(p.0).font(.system(size: 17)).frame(width: 26)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(p.1).font(UI.font(13, .black)).foregroundStyle(UI.ink)
+                                        Text(p.2).font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7))
+                                    }
+                                }
+                            }
                         }
-                        .font(UI.font(11, .black)).foregroundStyle(UI.link)
-
+                        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                        .bevel(raised: false, fill: UI.paper)
                         Button("NOT NOW", action: close).buttonStyle(ChunkyButton())
                     }
                     .padding(10)

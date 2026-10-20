@@ -6,9 +6,10 @@
 	  Pocket Beings privacy manifest.
 
 	  No network layer: no analytics, no crash reporter, no ads, no accounts,
-	  no server. The town is one JSON file in the app's own Documents folder.
-	  No Required Reason API is used (the save file is written with plain
-	  FileManager, not UserDefaults), so the accessed-API list is empty.
+	  no server. The town is one JSON file in the app group container, shared
+	  only with this app's own widget. UserDefaults holds the player's charges,
+	  purchases and settings (CA92.1), and two flags the widget reads through
+	  the app group (1C8F.1).
 	-->
 	<key>NSPrivacyTracking</key>
 	<false/>
@@ -17,6 +18,11 @@
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array/>
 	<key>NSPrivacyAccessedAPITypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key><string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key><array><string>CA92.1</string><string>1C8F.1</string></array>
+		</dict>
+	</array>
 </dict>
 </plist>

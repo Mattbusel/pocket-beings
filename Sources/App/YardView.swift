@@ -22,6 +22,7 @@ final class YardScene: SKScene {
         var restUntil: TimeInterval = 0
         var bubbleUntil: TimeInterval = 0
         var jailed = false
+        var hue = 0.0
     }
 
     private var sprites: [UUID: Sprite] = [:]
@@ -66,7 +67,7 @@ final class YardScene: SKScene {
         }
         var d = Dice(seed: 3)
         for _ in 0..<9 {
-            let f = SKLabelNode(text: d.pick(["🌼", "🌸", "🍄", "🌷", "🪨"]))
+            let f = SKLabelNode(text: d.pick(YardTheme.current.flowers))
             f.fontSize = 14
             f.position = CGPoint(x: CGFloat(d.roll(10, Int(max(11, size.width - 10)))),
                                  y: CGFloat(d.roll(10, Int(max(11, size.height - 10)))))
@@ -74,6 +75,19 @@ final class YardScene: SKScene {
             ground.addChild(f)
         }
         addChild(ground)
+    }
+
+    /// A new yard was picked: repaint the lawn and the names.
+    func retheme() {
+        backgroundColor = UIColor(UI.grass)
+        childNode(withName: "ground")?.removeFromParent()
+        buildGround()
+        for s in sprites.values { s.name.fontColor = nameColor(s.hue) }
+    }
+
+    private func nameColor(_ hue: Double) -> UIColor {
+        UIColor(hue: CGFloat(hue / 360), saturation: YardTheme.current.dark ? 0.35 : 0.75,
+                brightness: YardTheme.current.dark ? 0.98 : 0.35, alpha: 1)
     }
 
     // MARK: sync with the town
@@ -88,8 +102,9 @@ final class YardScene: SKScene {
             let s = sprites[b.id] ?? make(b)
             s.face.text = b.face
             s.name.text = b.name
-            s.name.fontColor = UIColor(hue: CGFloat(b.hue / 360), saturation: 0.75, brightness: 0.35, alpha: 1)
-            s.badge.text = b.seat?.badge ?? ""
+            s.hue = b.hue
+            s.name.fontColor = nameColor(b.hue)
+            s.badge.text = (b.seat?.badge ?? "") + (b.invited == true ? "🎟️" : "")
             s.jailed = b.isJailed(at: town.tick)
             s.bars.isHidden = !s.jailed
             s.node.alpha = s.jailed ? 0.75 : 1
@@ -231,6 +246,8 @@ final class YardScene: SKScene {
             // Further down the yard is nearer the camera, so it draws on top.
             s.node.zPosition = 1 + CGFloat(1 - s.y) * 5
             s.node.position = CGPoint(x: s.x * size.width, y: s.y * size.height + hop)
+            // Near the top of the yard the bubble would be cut off: say it underneath instead.
+            s.bubble.position.y = s.y * size.height > size.height - 64 ? -52 : 36
         }
     }
 
@@ -279,6 +296,7 @@ struct YardView: View {
                 .onChange(of: model.latest) { _, d in
                     if let d, let t = model.town { scene.show(d, town: t) }
                 }
+                .onChange(of: model.yardTick) { _, _ in scene.retheme() }
         }
         .accessibilityLabel("The yard")
     }

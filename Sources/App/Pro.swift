@@ -20,6 +20,13 @@ final class Pro: ObservableObject {
     @Published var busy = false
     @Published var message: String?
     @Published var showPaywall = false
+    /// The Town Club window (1.3), opened by anything locked.
+    @Published var showClub = false
+    /// Set by the app from the Town Club: members get everything The Big Hand has, while subscribed.
+    @Published var clubActive = false
+
+    /// The Big Hand's features: bought, grandfathered, or a Town Club member.
+    var hasBigHand: Bool { unlocked || clubActive }
 
     private var grandfathered = false
     private var updates: Task<Void, Never>?
@@ -33,13 +40,17 @@ final class Pro: ObservableObject {
         // fastlane's setupSnapshot adds -FASTLANE_SNAPSHOT to every launch, including the title
         // shot that has no -screenshots: without it StoreKit asks the simulator to sign in, and
         // that system alert sits over every later screenshot.
-        forced = args.contains("-screenshots") || args.contains("-demoAutoplay") || args.contains("-FASTLANE_SNAPSHOT")
+        forced = args.contains("-screenshots") || args.contains("-demoAutoplay") || args.contains("-FASTLANE_SNAPSHOT") || args.contains("-previewTour")
         if forced {
-            unlocked = false
+            // -proOn: the laws screenshot shows laws in force. Never set outside snapshot runs.
+            unlocked = args.contains("-proOn")
             showPaywall = args.contains("-showPaywall")
+            showClub = args.contains("-showClub")
+            clubActive = args.contains("-clubOn")
             return
         }
         unlocked = UserDefaults.standard.bool(forKey: key)
+        Shared.bigHand = unlocked
         updates = Task { [weak self] in
             for await result in Transaction.updates { await self?.apply(result) }
         }
@@ -50,8 +61,8 @@ final class Pro: ObservableObject {
 
     /// True when the player may use `m`; otherwise opens the paywall.
     func allows(_ m: Society.Meddle) -> Bool {
-        if !m.isPro || unlocked { return true }
-        showPaywall = true
+        if !m.isPro || hasBigHand { return true }
+        showClub = true
         return false
     }
 
@@ -113,6 +124,7 @@ final class Pro: ObservableObject {
     }
 
     private func grant() {
+        Shared.bigHand = true
         guard !unlocked else { return }
         unlocked = true
         showPaywall = false
@@ -120,6 +132,7 @@ final class Pro: ObservableObject {
     }
 
     private func revoke() {
+        Shared.bigHand = false
         unlocked = false
         UserDefaults.standard.set(false, forKey: key)
     }
@@ -159,6 +172,9 @@ struct PaywallWindow: View {
                         }
                         feature("⏱️", "Faster hand", "Meddle every 2 seconds instead of 5.")
                         feature("🪧", "Name your town", "Rename it whatever you like, whenever you like.")
+                        feature("📜", "Town laws", "Pass up to three laws. The town lives by them.")
+                        feature("🎀", "A bigger daily gift", "An extra miracle in every box of the gift calendar.")
+                        feature("🏛️", "Town Hall widget", "Headlines, the Crown and the jail on your Home Screen.")
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -185,7 +201,7 @@ struct PaywallWindow: View {
                             .buttonStyle(ChunkyButton())
                     }
 
-                    Text("One payment, yours for good. No subscription, no ads. Family Sharing works. Your town is never locked.")
+                    Text("One payment, yours for good. Not a subscription. No ads. Family Sharing works. Your town is never locked.")
                         .font(UI.font(10, .semibold))
                         .foregroundStyle(UI.ink.opacity(0.55))
                         .multilineTextAlignment(.center)

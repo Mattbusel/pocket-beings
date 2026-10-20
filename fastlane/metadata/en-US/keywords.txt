@@ -1,1 +1,1 @@
-idle,society,sim,town,funny,pet,virtual,tamagotchi,sandbox,chaos,tiny,people,economy,silly
+society,funny,pet,virtual,sandbox,chaos,economy,silly,politics,village,god,simulator,life,tycoon

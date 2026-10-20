@@ -3,15 +3,15 @@ import SwiftUI
 /// The look: a desktop from about 2001. Bevelled panels, a blue title bar,
 /// cream chrome, a green yard. Light, flat and a little bit silly.
 enum UI {
-    static let sky = Color(red: 0.62, green: 0.85, blue: 0.98)
+    static var sky: Color { YardTheme.current.sky }
     static let chrome = Color(red: 0.93, green: 0.91, blue: 0.85)
     static let chromeDark = Color(red: 0.55, green: 0.53, blue: 0.48)
     static let chromeLight = Color.white
     static let ink = Color(red: 0.10, green: 0.10, blue: 0.14)
     static let barA = Color(red: 0.04, green: 0.14, blue: 0.42)
     static let barB = Color(red: 0.36, green: 0.58, blue: 0.90)
-    static let grass = Color(red: 0.49, green: 0.80, blue: 0.42)
-    static let grassDark = Color(red: 0.40, green: 0.70, blue: 0.35)
+    static var grass: Color { YardTheme.current.grass }
+    static var grassDark: Color { YardTheme.current.grassDark }
     static let paper = Color(red: 1.0, green: 0.99, blue: 0.95)
     static let coin = Color(red: 0.98, green: 0.76, blue: 0.20)
     static let red = Color(red: 0.85, green: 0.22, blue: 0.20)

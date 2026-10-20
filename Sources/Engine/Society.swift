@@ -133,6 +133,8 @@ struct Town: Codable, Equatable {
     var laws: [String]? = nil
     /// The hall of records (1.2). Optional, so 1.1 saves decode.
     var records: Records? = nil
+    /// The almanac (1.3): one line per finished day. Optional, so older saves decode.
+    var history: [DaySnap]? = nil
 
     static let ledgerCap = 400
     static let population = 7
@@ -711,6 +713,7 @@ enum Society {
                                      actor: mayor), at: 0)
             }
         }
+        if t.tick % 20 == 0 { writeAlmanac(&t) }
         if t.has(.termLimits), t.tick % 60 == 0, t.beings.contains(where: { $0.seat != nil }) {
             for i in t.beings.indices { t.beings[i].seat = nil }
             t.ledger.insert(Deed(tick: t.tick, kind: "terms", text: "⏳ Term limits. Every seat in town is empty again.",

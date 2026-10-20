@@ -1,9 +1,11 @@
 import SwiftUI
+import TipKit
 import WidgetKit
 
 /// Every window the Start menu can open.
 enum Panel: String, Identifiable {
     case wish, miracles, invite, laws, records, yards, settings
+    case gift, season, album, almanac, widgets
     var id: String { rawValue }
 }
 
@@ -15,6 +17,7 @@ struct Taskbar: View {
     @EnvironmentObject private var player: Player
     @Binding var startOpen: Bool
     let town: Town
+    var tip: StartTip
 
     var body: some View {
         HStack(spacing: 6) {
@@ -33,11 +36,20 @@ struct Taskbar: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Start menu")
+            .popoverTip(tip, arrowEdge: .bottom)
+            .overlay(alignment: .topTrailing) {
+                if player.canClaim || player.unclaimedTiers > 0 {
+                    Circle().fill(UI.red).frame(width: 10, height: 10).offset(x: 3, y: -3)
+                        .accessibilityLabel("Something is waiting")
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded { tip.invalidate(reason: .actionPerformed) })
             Spacer(minLength: 4)
-            HStack(spacing: 8) {
-                tray("🔥", "\(player.streak)")
-                tray("✨", "\(player.miracles)")
-                tray("🎟️", "\(player.invites)")
+            HStack(spacing: 7) {
+                tray("🔥", "\(player.streak)").accessibilityLabel("Wish streak \(player.streak) days")
+                tray("✨", "\(player.miracles)").accessibilityLabel("\(player.miracles) miracles")
+                tray("🎟️", "\(player.invites)").accessibilityLabel("\(player.invites) invitations")
+                tray("⭐", "\(player.stars)").accessibilityLabel("\(player.stars) season stars")
                 Text("Day \(town.day)").font(UI.font(11, .black)).foregroundStyle(UI.ink)
             }
             .padding(.horizontal, 8).padding(.vertical, 5)
@@ -70,14 +82,22 @@ struct StartMenu: View {
                 .frame(maxHeight: .infinity)
                 .background(LinearGradient(colors: [UI.barB, UI.barA], startPoint: .top, endPoint: .bottom))
             VStack(alignment: .leading, spacing: 0) {
+                item("🎀", "Daily gift", player.canClaim ? "NEW" : "✓") { open(.gift) }
                 item("🌠", "Wish of the day", player.wish?.done == true ? "done ✓" : "+1 ✨") { open(.wish) }
+                item(player.season.icon, player.season.name, player.unclaimedTiers > 0 ? "\(player.unclaimedTiers) to claim" : "tier \(player.tier)") { open(.season) }
                 item("✨", "Miracles", "\(player.miracles) left") { open(.miracles) }
                 item("🎟️", "Invite a stranger", "\(player.invites) left") { open(.invite) }
-                item("📜", "Town laws", pro.unlocked ? "\(model.town?.activeLaws.count ?? 0)/\(Law.maxActive)" : "🔒") { open(.laws) }
+                item("📜", "Town laws", pro.hasBigHand ? "\(model.town?.activeLaws.count ?? 0)/\(Law.maxActive)" : "🔒") { open(.laws) }
+                item("📮", "Stamp album", "\(player.stamps.count)/\(Stamps.all.count)") { open(.album) }
                 item("🏆", "Hall of records", "") { open(.records) }
+                item("📊", "Town almanac", player.club ? "" : "🔒") { open(.almanac) }
                 item("🏡", "Yards", "") { open(.yards) }
+                item("📱", "Widgets", "") { open(.widgets) }
                 Divider().padding(.vertical, 2)
-                item("🫵", pro.unlocked ? "The Big Hand ✓" : "The Big Hand", pro.unlocked ? "" : pro.price) {
+                item("🏛️", player.club ? "Town Club ✓" : "Town Club", "") {
+                    close(); pro.showClub = true
+                }
+                item("🫵", pro.unlocked ? "The Big Hand ✓" : "The Big Hand", "") {
                     close(); if !pro.unlocked { pro.showPaywall = true }
                 }
                 item("⚙️", "Settings", "") { open(.settings) }
@@ -93,12 +113,12 @@ struct StartMenu: View {
     private func item(_ icon: String, _ title: String, _ trailing: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                Text(icon).font(.system(size: 18)).frame(width: 26)
-                Text(title).font(UI.font(14, .bold)).foregroundStyle(UI.ink)
+                Text(icon).font(.system(size: 17)).frame(width: 26)
+                Text(title).font(UI.font(14, .bold)).foregroundStyle(UI.ink).lineLimit(1).minimumScaleFactor(0.8)
                 Spacer()
                 Text(trailing).font(UI.font(11, .black)).foregroundStyle(UI.ink.opacity(0.55))
             }
-            .padding(.horizontal, 6).padding(.vertical, 7)
+            .padding(.horizontal, 6).padding(.vertical, 5.5)
             .contentShape(Rectangle())
         }
         .buttonStyle(MenuRow())
@@ -212,18 +232,22 @@ struct MiracleWindow: View {
         Modal(title: "Miracles", trailing: "✨ \(player.miracles)", close: close) {
             VStack(spacing: 8) {
                 if player.canClaim {
-                    Button("TAKE TODAY'S FREE MIRACLE (+\(player.dailyAllowance(pro: pro.unlocked)))") { player.claim(pro: pro.unlocked) }
+                    Button("OPEN TODAY'S GIFT (+\(player.todaysGift.label))") { player.claim() }
                         .buttonStyle(ChunkyButton(fill: UI.coin))
                 } else {
-                    Text("Today's free miracle is taken. Another tomorrow\(pro.unlocked ? " (two with The Big Hand)" : "").")
+                    Text("Today's gift is open. Another box tomorrow.")
                         .font(UI.font(11, .bold)).foregroundStyle(UI.ink.opacity(0.6)).multilineTextAlignment(.center)
                 }
                 ScrollView {
                     VStack(spacing: 6) {
                         ForEach(Miracle.allCases) { m in
+                            let locked = m.isClub && !player.club
                             Button {
+                                if locked { pro.showClub = true; return }
                                 guard player.spendMiracle() else { return }
                                 model.cast(m)
+                                player.bump("miracle")
+                                player.bump("cast." + m.rawValue)
                                 close()
                             } label: {
                                 HStack(alignment: .top, spacing: 8) {
@@ -233,14 +257,14 @@ struct MiracleWindow: View {
                                         Text(m.blurb).font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7)).multilineTextAlignment(.leading)
                                     }
                                     Spacer()
-                                    Text("✨1").font(UI.font(12, .black)).foregroundStyle(UI.ink)
+                                    Text(locked ? "🔒 CLUB" : "✨1").font(UI.font(12, .black)).foregroundStyle(UI.ink)
                                 }
                                 .padding(8)
-                                .bevel(raised: true, fill: UI.chrome)
+                                .bevel(raised: true, fill: m.isClub ? UI.coin.opacity(0.3) : UI.chrome)
                             }
                             .buttonStyle(.plain)
-                            .disabled(player.miracles == 0)
-                            .opacity(player.miracles == 0 ? 0.55 : 1)
+                            .disabled(player.miracles == 0 && !locked)
+                            .opacity(player.miracles == 0 && !locked ? 0.55 : 1)
                         }
                     }
                 }
@@ -259,7 +283,15 @@ struct BuyRow: View {
     let title: String
     let detail: String
     let id: String
+    /// Store screenshots never show a price (Guideline 2.3.7); the review screenshots pass -showPrices.
+    private var hidden: Bool {
+        let a = ProcessInfo.processInfo.arguments
+        return a.contains("-screenshots") && !a.contains("-showPrices")
+    }
     var body: some View {
+        if !hidden { row }
+    }
+    private var row: some View {
         VStack(spacing: 4) {
             HStack(spacing: 8) {
                 Text(icon).font(.system(size: 26))
@@ -301,7 +333,7 @@ struct InviteWindow: View {
                     .font(UI.font(16, .bold)).padding(8).bevel(raised: false, fill: .white)
                     .textInputAutocapitalization(.words)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 9), spacing: 4) {
-                    ForEach(Self.faces, id: \.self) { f in
+                    ForEach(Self.faces + player.faces.filter { !Self.faces.contains($0) }, id: \.self) { f in
                         Button { face = f } label: {
                             Text(f).font(.system(size: 22)).frame(maxWidth: .infinity).padding(.vertical, 3)
                                 .bevel(raised: face != f, fill: face == f ? UI.coin.opacity(0.6) : UI.chrome)
@@ -328,6 +360,7 @@ struct InviteWindow: View {
                 Button(player.invites > 0 ? "SEND THE INVITATION 🎟️" : "NO INVITATIONS LEFT") {
                     guard player.spendInvite() else { return }
                     model.invite(name: name, face: face, replacing: town.beings.first { $0.id == replacing })
+                    player.bump("invite")
                     close()
                 }
                 .buttonStyle(ChunkyButton(fill: UI.coin))
@@ -343,18 +376,20 @@ struct InviteWindow: View {
 struct LawsWindow: View {
     @EnvironmentObject private var model: TownModel
     @EnvironmentObject private var pro: Pro
+    @EnvironmentObject private var player: Player
     let town: Town
     var close: () -> Void
     var body: some View {
         Modal(title: "Town laws", trailing: "\(town.activeLaws.count)/\(Law.maxActive) in force", close: close) {
             VStack(spacing: 6) {
-                Text(pro.unlocked ? "Pass up to three. The town lives by them until you repeal them."
-                                  : "Laws come with The Big Hand. Here is what they do.")
+                Text(pro.hasBigHand ? "Pass up to three. The town lives by them until you repeal them."
+                                  : "Laws come with The Big Hand and the Town Club. Here is what they do.")
                     .font(UI.font(12, .semibold)).foregroundStyle(UI.ink.opacity(0.75)).multilineTextAlignment(.center)
                 ForEach(Law.allCases) { law in
                     let on = town.has(law)
                     Button {
-                        guard pro.unlocked else { close(); pro.showPaywall = true; return }
+                        guard pro.hasBigHand else { close(); pro.showClub = true; return }
+                        if !on { player.bump("law") }
                         model.toggle(law)
                     } label: {
                         HStack(alignment: .top, spacing: 8) {
@@ -364,7 +399,7 @@ struct LawsWindow: View {
                                 Text(law.blurb).font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7)).multilineTextAlignment(.leading)
                             }
                             Spacer()
-                            Text(on ? "IN FORCE" : pro.unlocked ? "PASS" : "🔒").font(UI.font(10, .black))
+                            Text(on ? "IN FORCE" : pro.hasBigHand ? "PASS" : "🔒").font(UI.font(10, .black))
                                 .foregroundStyle(on ? .white : UI.ink)
                                 .padding(.horizontal, 6).padding(.vertical, 3)
                                 .background(on ? Color(red: 0.12, green: 0.45, blue: 0.14) : .clear)
@@ -373,7 +408,7 @@ struct LawsWindow: View {
                         .bevel(raised: !on, fill: on ? Color(red: 0.86, green: 0.95, blue: 0.84) : UI.chrome)
                     }
                     .buttonStyle(.plain)
-                    .disabled(pro.unlocked && !on && town.activeLaws.count >= Law.maxActive)
+                    .disabled(pro.hasBigHand && !on && town.activeLaws.count >= Law.maxActive)
                 }
             }
         }
@@ -423,9 +458,9 @@ struct YardsWindow: View {
     var close: () -> Void
     @State private var current = YardTheme.current.id
     var body: some View {
-        Modal(title: "Yards", trailing: "\(extras.price(Extras.yardID("snow"))) each", close: close) {
+        Modal(title: "Yards", trailing: "\(YardTheme.all.filter { extras.owns(yard: $0.id) }.count)/\(YardTheme.all.count) yours", close: close) {
             VStack(spacing: 6) {
-                Text("Each yard repaints the lawn, the sky and the widget, and changes the app icon to match. Yours for good.")
+                Text("Each yard repaints the lawn, the sky and the widgets, and changes the app icon to match. Buy one to keep it for good, or play on all of them in the Town Club.")
                     .font(UI.font(11, .semibold)).foregroundStyle(UI.ink.opacity(0.75)).multilineTextAlignment(.center)
                 ForEach(YardTheme.all) { y in
                     let owned = extras.owns(yard: y.id), on = current == y.id
@@ -480,6 +515,9 @@ struct SettingsWindow: View {
     @EnvironmentObject private var player: Player
     @EnvironmentObject private var pro: Pro
     @EnvironmentObject private var extras: Extras
+    @EnvironmentObject private var club: Club
+    @EnvironmentObject private var model: TownModel
+    @State private var backupNote: String?
     var close: () -> Void
     var body: some View {
         Modal(title: "Settings", close: close) {
@@ -488,25 +526,55 @@ struct SettingsWindow: View {
                     if on { Task { await player.askToNotify() } } else { player.notify = false }
                 })) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Wish reminder").font(UI.font(13, .black)).foregroundStyle(UI.ink)
-                        Text("One nudge at 10:00, skipped once today's wish is granted.").font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7))
+                        Text("Daily reminder").font(UI.font(13, .black)).foregroundStyle(UI.ink)
+                        Text("One nudge at 10:00 for the gift and the wish, skipped once both are done.").font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7))
                     }
                 }
                 .tint(Color(red: 0.12, green: 0.45, blue: 0.14))
                 .padding(8).bevel(raised: false, fill: UI.paper)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Widgets").font(UI.font(13, .black)).foregroundStyle(UI.ink)
-                    Text("Touch and hold the Home Screen, tap Edit, Add Widget, Pocket Beings. The small Daily Grudge is free; the big Town Hall comes with The Big Hand.")
+                    Text("Touch and hold the Home Screen, tap Edit, Add Widget, Pocket Beings. Town Square, The Daily Grudge and the Lock Screen widgets are free; Town Hall comes with The Big Hand or the Town Club. There is also a Control Center button.")
                         .font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(8).bevel(raised: false, fill: UI.paper)
-                Button(pro.busy ? "ONE MOMENT..." : "RESTORE PURCHASES") {
-                    Task { await pro.restore(); await extras.restore() }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("iCloud backup").font(UI.font(13, .black)).foregroundStyle(UI.ink)
+                    Text(club.active ? "Town Club: your town and stash are copied to your iCloud whenever you leave the app."
+                                     : "Town Club members get their town and stash copied to their own iCloud. Restoring a backup is always free.")
+                        .font(UI.font(11, .medium)).foregroundStyle(UI.ink.opacity(0.7))
+                    if let d = Backup.last {
+                        Text("Last backup " + d.formatted(.relative(presentation: .named))).font(UI.font(10, .bold)).foregroundStyle(UI.ink.opacity(0.6))
+                    }
+                    HStack(spacing: 6) {
+                        if club.active {
+                            Button("BACK UP NOW") { Backup.save(); backupNote = "Backed up." }.buttonStyle(ChunkyButton())
+                        }
+                        if Backup.last != nil {
+                            Button("RESTORE") {
+                                model.leaveTown()
+                                if Backup.restore() { player.load(); backupNote = "Restored. Tap CONTINUE." } else { backupNote = "No backup found." }
+                                close()
+                            }
+                            .buttonStyle(ChunkyButton())
+                        }
+                    }
+                    if let n = backupNote { Text(n).font(UI.font(10, .bold)).foregroundStyle(UI.link) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(8).bevel(raised: false, fill: UI.paper)
+                Button(pro.busy || club.busy ? "ONE MOMENT..." : "RESTORE PURCHASES") {
+                    Task { await pro.restore(); await extras.restore(); await club.restore() }
                 }
                 .buttonStyle(ChunkyButton())
                 if let m = pro.message { Text(m).font(UI.font(11, .bold)).foregroundStyle(UI.ink.opacity(0.7)) }
-                Text("No accounts, no ads, no tracking. The town lives on this phone.")
+                HStack(spacing: 16) {
+                    Link("Terms of Use", destination: Club.terms)
+                    Link("Privacy Policy", destination: Club.privacy)
+                }
+                .font(UI.font(11, .black)).foregroundStyle(UI.link)
+                Text("No accounts, no ads, no tracking. The town lives on this phone (and your own iCloud, for Club backups).")
                     .font(UI.font(10, .semibold)).foregroundStyle(UI.ink.opacity(0.55)).multilineTextAlignment(.center)
             }
         }

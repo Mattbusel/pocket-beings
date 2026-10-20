@@ -246,6 +246,8 @@ final class YardScene: SKScene {
             // Further down the yard is nearer the camera, so it draws on top.
             s.node.zPosition = 1 + CGFloat(1 - s.y) * 5
             s.node.position = CGPoint(x: s.x * size.width, y: s.y * size.height + hop)
+            // Near the top of the yard the bubble would be cut off: say it underneath instead.
+            s.bubble.position.y = s.y * size.height > size.height - 64 ? -52 : 36
         }
     }
 

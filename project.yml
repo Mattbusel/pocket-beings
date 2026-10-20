@@ -64,6 +64,8 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.com.mattbusel.pocketbeings
+        # Town Club iCloud backup (1.2): the player's own key-value store, nothing else.
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
 
     info:
       path: Resources/Info.plist

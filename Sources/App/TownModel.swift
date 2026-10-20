@@ -18,6 +18,8 @@ final class TownModel: ObservableObject {
     @Published var yardTick = 0
     /// The demo script opening a being's file, for the review recording.
     @Published var demoSelected: UUID?
+    /// The preview tour opening windows (1.3).
+    @Published var demoPanel: Panel?
 
     static let secondsPerTick: Double = 2.4
     static let meddleCooldown: Double = 5
@@ -37,6 +39,8 @@ final class TownModel: ObservableObject {
 
     /// Called after every turn, so today's wish can notice when it comes true.
     var onTurn: ((Town) -> Void)?
+    /// Called after every meddle, for the weekly challenges.
+    var onMeddle: ((Society.Meddle) -> Void)?
 
     var hasSavedTown: Bool { FileManager.default.fileExists(atPath: Self.file.path) }
 
@@ -64,7 +68,8 @@ final class TownModel: ObservableObject {
             // A fixed town with a morning of history, so the store screenshots
             // are the same every run and are never an empty yard.
             var t = Founding.town(seed: 20260911, name: "Grudge Hollow")
-            for _ in 0..<150 { Society.step(&t) }
+            // The almanac shot wants a month of history; everything else, a morning.
+            for _ in 0..<(args.contains("-showAlmanac") ? 620 : 150) { Society.step(&t) }
             if args.contains("-showLaws") { t.laws = [Law.toughOnCrime.rawValue, Law.basicCoin.rawValue] }
             if args.contains("-invited") {
                 _ = Society.invite(&t, name: "Grandma Jo", face: "👵", replacing: nil)
@@ -90,6 +95,16 @@ final class TownModel: ObservableObject {
         latest = t.ledger.first
         awayNews = []
         save()
+        start()
+    }
+
+    /// The preview tour: the screenshot town, fresh, with the clock running.
+    func newTownForTour() {
+        var t = Founding.town(seed: 20260911, name: "Grudge Hollow")
+        for _ in 0..<150 { Society.step(&t) }
+        town = t
+        latest = t.ledger.first
+        awayNews = []
         start()
     }
 
@@ -154,6 +169,7 @@ final class TownModel: ObservableObject {
         latest = t.ledger.first
         town = t
         onTurn?(t)
+        onMeddle?(m)
         save()
     }
 

@@ -28,6 +28,15 @@ enum Shared {
         set { defaults.set(newValue, forKey: "bighand") }
     }
 
+    /// The Town Club, mirrored by the app so the widget knows (1.3).
+    static var club: Bool {
+        get { defaults.bool(forKey: "club") }
+        set { defaults.set(newValue, forKey: "club") }
+    }
+
+    /// Either one unlocks the Town Hall widget.
+    static var paid: Bool { bigHand || club }
+
     static var yard: String {
         get { defaults.string(forKey: "yard") ?? "classic" }
         set { defaults.set(newValue, forKey: "yard") }

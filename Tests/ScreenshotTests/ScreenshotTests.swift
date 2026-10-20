@@ -17,21 +17,31 @@ final class ScreenshotTests: XCTestCase {
         app.launch()
         sleep(2)
         dismissSystemSignIn(app)
-        snapshot("00_Title")
+        snapshot("x0_Title")
         app.terminate()
 
+        // 01-10 are the store set: no prices anywhere in them (Guideline 2.3.7).
+        // x* are for App Review screenshots of the purchases and are never uploaded as store shots.
         let shots: [(String, [String])] = [
             ("01_Town", []),
-            ("02_Wish", ["-showWish"]),
-            ("03_Meddle", ["-showCard"]),
-            ("04_Miracles", ["-showMiracles"]),
-            ("05_Invite", ["-showInvite", "-invited"]),
-            ("06_Laws", ["-showLaws", "-proOn"]),
-            ("07_Yards", ["-showYards", "-yard", "night", "-ownYards"]),
-            ("08_Start", ["-showStart"]),
-            ("09_Records", ["-showRecords"]),
-            ("10_Away", ["-showNews", "-yard", "snow"]),
-            ("11_Paywall", ["-showPaywall"]),
+            ("02_Meddle", ["-showCard"]),
+            ("03_Gift", ["-showGift"]),
+            ("04_Season", ["-showSeason", "-clubOn"]),
+            ("05_Album", ["-showAlbum"]),
+            ("06_Widgets", ["-showWidgets"]),
+            ("07_Miracles", ["-showMiracles", "-clubOn"]),
+            ("08_Invite", ["-showInvite", "-invited"]),
+            ("09_Laws", ["-showLaws", "-proOn"]),
+            ("10_Almanac", ["-showAlmanac", "-clubOn"]),
+            ("x1_Club", ["-showClub"]),
+            ("x2_Paywall", ["-showPaywall"]),
+            ("x3_Yards", ["-showYards", "-showPrices"]),
+            ("x4_Jar", ["-showMiracles", "-showPrices"]),
+            ("x5_Invites", ["-showInvite", "-showPrices"]),
+            ("x6_Boost", ["-showSeason", "-showPrices"]),
+            ("x7_Records", ["-showRecords"]),
+            ("x8_Wish", ["-showWish"]),
+            ("x9_Start", ["-showStart"]),
         ]
         for (name, args) in shots {
             app = XCUIApplication()

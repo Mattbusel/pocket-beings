@@ -1,4 +1,7 @@
+import StoreKit
 import SwiftUI
+import TipKit
+import WidgetKit
 
 /// Two screens: the title, and the town. Everything else is a window on top.
 struct RootView: View {
@@ -6,6 +9,7 @@ struct RootView: View {
     @EnvironmentObject private var pro: Pro
     @EnvironmentObject private var player: Player
     @EnvironmentObject private var extras: Extras
+    @EnvironmentObject private var club: Club
 
     var body: some View {
         ZStack {
@@ -18,15 +22,21 @@ struct RootView: View {
             if pro.showPaywall {
                 PaywallWindow().zIndex(10)
             }
+            if pro.showClub {
+                ClubWindow { pro.showClub = false }.zIndex(11)
+            }
         }
         .animation(.easeOut(duration: 0.25), value: model.town == nil)
         .animation(.easeOut(duration: 0.2), value: pro.showPaywall)
+        .animation(.easeOut(duration: 0.2), value: pro.showClub)
         .onAppear {
-            model.fastHand = pro.unlocked
+            syncClub()
             model.onTurn = { [weak player] t in player?.check(town: t) }
+            model.onMeddle = { [weak player] m in player?.bump("meddle"); player?.bump(m.rawValue) }
             extras.onConsumable = { [weak player] id in
                 if id == Extras.miraclesID { player?.addMiracles(5) }
                 if id == Extras.invitesID { player?.addInvites(3) }
+                if id == Extras.boostID { player?.addStars(Season.starsPerTier) }
             }
             extras.start()
             if let t = model.town { player.refreshWish(town: t) }
@@ -36,8 +46,71 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             if let t = model.town { player.refreshWish(town: t) }
         }
-        .onChange(of: pro.unlocked) { _, now in model.fastHand = now }
+        .onChange(of: pro.unlocked) { _, _ in syncClub() }
+        .onChange(of: club.active) { _, now in
+            syncClub()
+            // A lapsed member keeps yards they bought; a Club-only yard goes back to the classic lawn.
+            if !now, !extras.owns(yard: Shared.yard) {
+                YardTheme.apply("classic")
+                model.yardTick += 1
+                if UIApplication.shared.supportsAlternateIcons, UIApplication.shared.alternateIconName != nil {
+                    UIApplication.shared.setAlternateIconName(nil)
+                }
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+            if club.active { Backup.save() }
+        }
         .task { await demo() }
+        .task { await tour() }
+    }
+
+    /// One place that tells everyone who has what.
+    private func syncClub() {
+        pro.clubActive = club.active
+        player.club = club.active
+        player.bigHand = pro.unlocked
+        model.fastHand = pro.hasBigHand
+    }
+
+    /// The App Store preview: a 28-second tour of the town, driven by the app itself. Debug builds only.
+    private func tour() async {
+        #if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("-previewTour") else { return }
+        let wait = { (s: Double) in try? await Task.sleep(for: .seconds(s)) }
+        model.newTownForTour()
+        await wait(3.5)
+        model.demoPanel = .gift
+        await wait(1.6)
+        _ = player.claim()
+        await wait(2.2)
+        model.demoPanel = nil
+        await wait(1.0)
+        if let rich = model.town?.beings.max(by: { $0.wallet < $1.wallet }) {
+            model.demoSelected = rich.id
+            await wait(2.0)
+            model.meddle(.crown, on: rich, force: true)
+            await wait(1.6)
+            model.demoSelected = nil
+        }
+        await wait(1.2)
+        model.demoPanel = .miracles
+        await wait(2.0)
+        model.cast(.festival)
+        model.demoPanel = nil
+        await wait(2.6)
+        model.demoPanel = .season
+        await wait(3.0)
+        model.demoPanel = .album
+        await wait(2.6)
+        model.demoPanel = .widgets
+        await wait(3.0)
+        model.demoPanel = nil
+        await wait(2.5)
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        FileManager.default.createFile(atPath: url.appendingPathComponent("demo_done").path, contents: nil)
+        #endif
     }
 
     /// For the App Review recording: watch the town, open two files, crown
@@ -73,6 +146,7 @@ struct RootView: View {
 struct TitleView: View {
     @EnvironmentObject private var model: TownModel
     @EnvironmentObject private var pro: Pro
+    @EnvironmentObject private var club: Club
     @State private var bob = false
 
     private let faces = ["📈", "🧶", "😈", "📎", "🦞", "🔮", "👺"]
@@ -141,6 +215,14 @@ struct TitleView: View {
                         }
                         .disabled(pro.unlocked)
                         .padding(.top, 2)
+                        Button {
+                            pro.showClub = true
+                        } label: {
+                            Text(club.active ? "🏛️ You are in the Town Club" : "🏛️ The Town Club: more every month")
+                                .font(UI.font(12, .black))
+                                .foregroundStyle(UI.link)
+                                .underline()
+                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.bottom, 14)
@@ -184,6 +266,9 @@ struct TownView: View {
     @EnvironmentObject private var model: TownModel
     @EnvironmentObject private var pro: Pro
     @EnvironmentObject private var player: Player
+    @Environment(\.requestReview) private var requestReview
+    private let meddleTip = MeddleTip()
+    private let startTip = StartTip()
     @State private var selected: UUID?
     @State private var renaming = false
     @State private var newName = ""
@@ -196,8 +281,11 @@ struct TownView: View {
                 VStack(spacing: 0) {
                     WindowBox(title: town.name, trailing: "Day \(town.day)") {
                         VStack(spacing: 6) {
-                            YardView { id in selected = id }
+                            YardView { id in selected = id; meddleTip.invalidate(reason: .actionPerformed) }
                                 .frame(height: 300)
+                                .overlay(alignment: .top) {
+                                    TipView(meddleTip).padding(.horizontal, 6).padding(.top, 6)
+                                }
                                 .bevel(raised: false, fill: UI.grass)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
@@ -216,12 +304,12 @@ struct TownView: View {
                                     .font(UI.font(12, .semibold))
                                     .foregroundStyle(UI.ink.opacity(0.7))
                                 Spacer()
-                                Button(pro.unlocked ? "RENAME" : "🔒 RENAME") {
-                                    if pro.unlocked {
+                                Button(pro.hasBigHand ? "RENAME" : "🔒 RENAME") {
+                                    if pro.hasBigHand {
                                         newName = town.name
                                         renaming = true
                                     } else {
-                                        pro.showPaywall = true
+                                        pro.showClub = true
                                     }
                                 }
                                 .font(UI.font(12, .black))
@@ -229,7 +317,7 @@ struct TownView: View {
                             }
                             .padding(.horizontal, 12)
 
-                            Taskbar(startOpen: $startOpen, town: town)
+                            Taskbar(startOpen: $startOpen, town: town, tip: startTip)
                                 .padding(.horizontal, 6)
                                 .padding(.bottom, 6)
                         }
@@ -268,13 +356,40 @@ struct TownView: View {
                         case .records: RecordsWindow(town: town) { panel = nil }
                         case .yards: YardsWindow { panel = nil }
                         case .settings: SettingsWindow { panel = nil }
+                        case .gift: GiftWindow { panel = nil }
+                        case .season: SeasonWindow { panel = nil }
+                        case .album: AlbumWindow { panel = nil }
+                        case .almanac: AlmanacWindow(town: town) { panel = nil }
+                        case .widgets: WidgetsWindow(town: town) { panel = nil }
                         }
                     }
                     .zIndex(5)
                 }
 
                 if let w = player.wishBanner {
-                    WishGranted(wish: w) { player.wishBanner = nil }.zIndex(6)
+                    WishGranted(wish: w) {
+                        player.wishBanner = nil
+                        askForReviewIfHappy()
+                    }.zIndex(6)
+                }
+
+                if let t = player.toast {
+                    VStack {
+                        Text(t)
+                            .font(UI.font(13, .black)).foregroundStyle(UI.ink)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .bevel(raised: true, fill: UI.coin)
+                            .padding(.top, 54)
+                            .onTapGesture { player.toast = nil }
+                        Spacer()
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(7)
+                    .task(id: t) {
+                        try? await Task.sleep(for: .seconds(3))
+                        if player.toast == t { withAnimation { player.toast = nil } }
+                    }
                 }
 
                 if !model.awayNews.isEmpty {
@@ -288,6 +403,7 @@ struct TownView: View {
             Button("Cancel", role: .cancel) {}
         }
         .animation(.easeOut(duration: 0.18), value: panel)
+        .animation(.easeOut(duration: 0.25), value: player.toast)
         .onAppear {
             let args = ProcessInfo.processInfo.arguments
             if args.contains("-showCard") {
@@ -295,13 +411,38 @@ struct TownView: View {
             }
             if args.contains("-showStart") { startOpen = true }
             for (flag, p) in [("-showWish", Panel.wish), ("-showMiracles", .miracles), ("-showInvite", .invite),
-                              ("-showLaws", .laws), ("-showRecords", .records), ("-showYards", .yards)] where args.contains(flag) {
+                              ("-showLaws", .laws), ("-showRecords", .records), ("-showYards", .yards),
+                              ("-showGift", .gift), ("-showSeason", .season), ("-showAlbum", .album),
+                              ("-showAlmanac", .almanac), ("-showWidgets", .widgets)] where args.contains(flag) {
                 panel = p
+            }
+            // The daily gift opens itself once a day, the first time the town is opened.
+            if !args.contains("-screenshots") && !args.contains("-demoAutoplay") && !args.contains("-previewTour"),
+               player.canClaim, panel == nil, model.awayNews.isEmpty {
+                Task { try? await Task.sleep(for: .seconds(0.8)); if model.awayNews.isEmpty && panel == nil { panel = .gift } }
             }
         }
         .onChange(of: model.demoSelected) { _, id in
             withAnimation(.easeOut(duration: 0.2)) { selected = id }
         }
+        .onChange(of: model.demoPanel) { _, p in
+            withAnimation(.easeOut(duration: 0.2)) { panel = p }
+        }
+        .onChange(of: model.awayNews.isEmpty) { _, empty in
+            let args = ProcessInfo.processInfo.arguments
+            if empty, player.canClaim, panel == nil, !args.contains("-screenshots"), !args.contains("-previewTour") { panel = .gift }
+        }
+    }
+}
+
+extension TownView {
+    /// After the third granted wish, once per version: a happy moment, never on launch.
+    func askForReviewIfHappy() {
+        let key = "pb.reviewAsked." + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+        guard player.wishesGranted >= 3, !UserDefaults.standard.bool(forKey: key),
+              !ProcessInfo.processInfo.arguments.contains("-screenshots") else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        Task { try? await Task.sleep(for: .seconds(1)); requestReview() }
     }
 }
 
@@ -393,7 +534,7 @@ struct BeingCard: View {
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                         ForEach(Society.Meddle.allCases) { m in
-                            let locked = m.isPro && !pro.unlocked
+                            let locked = m.isPro && !pro.hasBigHand
                             Button {
                                 guard pro.allows(m) else { return }
                                 model.meddle(m, on: being)

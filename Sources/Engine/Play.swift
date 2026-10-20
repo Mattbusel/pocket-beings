@@ -58,6 +58,10 @@ extension Town {
 /// One-shot acts of the sky. The player holds charges and spends one each.
 enum Miracle: String, CaseIterable, Identifiable {
     case coup, election, frogs, goldRush, festival, twister, haunting
+    /// Town Club miracles (1.3).
+    case taxHoliday, crimeWave
+
+    var isClub: Bool { self == .taxHoliday || self == .crimeWave }
 
     var id: String { rawValue }
 
@@ -70,6 +74,8 @@ enum Miracle: String, CaseIterable, Identifiable {
         case .festival: return "Festival"
         case .twister: return "Twister"
         case .haunting: return "Haunting"
+        case .taxHoliday: return "Tax Holiday"
+        case .crimeWave: return "Crime Wave"
         }
     }
 
@@ -82,6 +88,8 @@ enum Miracle: String, CaseIterable, Identifiable {
         case .festival: return "🎪"
         case .twister: return "🌪️"
         case .haunting: return "👻"
+        case .taxHoliday: return "🏖️"
+        case .crimeWave: return "🦹"
         }
     }
 
@@ -94,6 +102,8 @@ enum Miracle: String, CaseIterable, Identifiable {
         case .festival: return "Everyone makes a friend. Grudges and heat melt away."
         case .twister: return "Every wallet is picked up and dropped on someone else."
         case .haunting: return "Every face in town changes overnight."
+        case .taxHoliday: return "The treasury is emptied into every wallet, equally."
+        case .crimeWave: return "Everyone turns to crime and the Sheriff quits."
         }
     }
 }
@@ -153,6 +163,17 @@ extension Society {
         case .haunting:
             for i in t.beings.indices { t.beings[i].face = t.dice.pick(Words.newFaces) }
             say(&t, "👻 A HAUNTING. Everyone woke up with a different face.", kind: "miracle", actor: sky, big: true)
+        case .taxHoliday:
+            let each = t.treasury / max(1, t.beings.count)
+            for b in t.beings { pay(&t, b.id, each) }
+            t.treasury -= each * t.beings.count
+            say(&t, "🏖️ A TAX HOLIDAY. The treasury handed everyone \(each) coins and shut for the week.", kind: "miracle", actor: sky, big: true)
+        case .crimeWave:
+            for i in t.beings.indices {
+                t.beings[i].heat = min(100, t.beings[i].heat + 40)
+                if t.beings[i].seat == .sheriff { t.beings[i].seat = nil }
+            }
+            say(&t, "🦹 A CRIME WAVE. Everyone is a suspect and the Sheriff handed in the star.", kind: "miracle", actor: sky, big: true)
         }
         if let d = t.ledger.first { noteRecord(&t, d) }
     }

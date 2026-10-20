@@ -9,8 +9,10 @@ import SwiftUI
 final class Extras: ObservableObject {
     static let miraclesID = "com.mattbusel.pocketbeings.miracles5"
     static let invitesID = "com.mattbusel.pocketbeings.invites3"
+    /// One Season tier of stars (1.3).
+    static let boostID = "com.mattbusel.pocketbeings.boost"
     static func yardID(_ id: String) -> String { "com.mattbusel.pocketbeings.yard." + id }
-    static var allIDs: [String] { [miraclesID, invitesID] + YardTheme.all.filter { $0.id != "classic" }.map { yardID($0.id) } }
+    static var allIDs: [String] { [miraclesID, invitesID, boostID] + YardTheme.all.filter { $0.id != "classic" }.map { yardID($0.id) } }
 
     @Published private(set) var owned: Set<String> = []
     @Published private(set) var products: [String: Product] = [:]
@@ -24,7 +26,7 @@ final class Extras: ObservableObject {
 
     init() {
         let args = ProcessInfo.processInfo.arguments
-        demo = args.contains("-screenshots") || args.contains("-demoAutoplay") || args.contains("-FASTLANE_SNAPSHOT")
+        demo = args.contains("-screenshots") || args.contains("-demoAutoplay") || args.contains("-FASTLANE_SNAPSHOT") || args.contains("-previewTour")
         if demo {
             owned = args.contains("-ownYards") ? Set(Self.allIDs) : [Self.yardID("snow")]
             return
@@ -56,7 +58,8 @@ final class Extras: ObservableObject {
     }
 
     func price(_ id: String) -> String { products[id]?.displayPrice ?? "$0.99" }
-    func owns(yard id: String) -> Bool { id == "classic" || owned.contains(Self.yardID(id)) }
+    /// Bought, or played while a Town Club member.
+    func owns(yard id: String) -> Bool { id == "classic" || owned.contains(Self.yardID(id)) || Shared.club }
 
     func refresh() async {
         guard !demo else { return }
@@ -85,7 +88,7 @@ final class Extras: ObservableObject {
     @discardableResult
     func buy(_ id: String) async -> Bool {
         message = nil
-        if demo { if id == Self.miraclesID || id == Self.invitesID { onConsumable?(id) } else { owned.insert(id) }; return true }
+        if demo { if id == Self.miraclesID || id == Self.invitesID || id == Self.boostID { onConsumable?(id) } else { owned.insert(id) }; return true }
         await load()
         guard let p = products[id] else { message = "The App Store did not answer. Check your connection and try again."; return false }
         busy = id; defer { busy = nil }

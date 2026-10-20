@@ -19,6 +19,7 @@ on:
           - compile       # build + unit tests, ~3 min, no simulator screenshots
           - screenshots   # capture store screenshots, download as an artifact
           - review_video  # a full real round from the home screen, for App Review
+          - preview       # the App Store app preview: a scripted tour, recorded
           - dry_run       # build, sign, upload; do not submit
           - release       # everything, including submit for review
 
@@ -120,7 +121,7 @@ jobs:
       # round and presses the buttons itself, and drops a file when it is done.
       # Recording starts on the home screen, then the app is launched.
       - name: Record the review video
-        if: ${{ inputs.action == 'review_video' }}
+        if: ${{ inputs.action == 'review_video' || inputs.action == 'preview' }}
         timeout-minutes: 20
         run: |
           set -o pipefail
@@ -147,7 +148,7 @@ jobs:
           rec=$!
           sleep 3
 
-          xcrun simctl launch "$udid" com.mattbusel.pocketbeings -demoAutoplay
+          xcrun simctl launch "$udid" com.mattbusel.pocketbeings ${{ inputs.action == 'preview' && '-previewTour' || '-demoAutoplay' }}
           data=$(xcrun simctl get_app_container "$udid" com.mattbusel.pocketbeings data)
           status=1
           for i in $(seq 1 480); do
@@ -162,7 +163,7 @@ jobs:
           exit $status
 
       - name: Upload the video
-        if: ${{ always() && (inputs.action == 'screenshots' || inputs.action == 'review_video') }}
+        if: ${{ always() && (inputs.action == 'screenshots' || inputs.action == 'review_video' || inputs.action == 'preview') }}
         uses: actions/upload-artifact@v4
         with:
           name: video

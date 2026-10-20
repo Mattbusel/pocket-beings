@@ -278,9 +278,15 @@ struct AlmanacWindow: View {
         }
     }
 
-    static let placeholder: [DaySnap] = (1...12).map {
-        DaySnap(day: $0, wealth: 700 + $0 * 60 + ($0 % 3) * 90, treasury: 200, prices: 1 + Double($0) * 0.08, jailed: $0 % 3, crimes: 3 + $0 % 5, richest: "")
-    }
+    static let placeholder: [DaySnap] = {
+        var out: [DaySnap] = []
+        for d in 1...12 {
+            let wealth: Int = 700 + d * 60 + (d % 3) * 90
+            let prices: Double = 1.0 + Double(d) * 0.08
+            out.append(DaySnap(day: d, wealth: wealth, treasury: 200, prices: prices, jailed: d % 3, crimes: 3 + d % 5, richest: ""))
+        }
+        return out
+    }()
 
     private func row(_ icon: String, _ k: String, _ v: String) -> some View {
         HStack(spacing: 6) {

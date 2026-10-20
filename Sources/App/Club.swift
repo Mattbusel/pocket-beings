@@ -10,8 +10,6 @@ final class Club: ObservableObject {
     static let monthlyID = "com.mattbusel.pocketbeings.club.monthly"
     static let yearlyID = "com.mattbusel.pocketbeings.club.yearly"
     static let ids = [yearlyID, monthlyID]
-    /// A custom offer code made in App Store Connect for Big Hand owners: first month free.
-    static let bigHandOfferCode = "BIGHANDCLUB"
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     static let privacy = URL(string: "https://tensorust.com/apps/pocket-beings/privacy/")!
 
@@ -191,7 +189,7 @@ struct ClubWindow: View {
                             Button("REDEEM CODE") { redeem = true }.buttonStyle(ChunkyButton())
                         }
                         if pro.unlocked && !club.active {
-                            Text("Big Hand owners: you keep The Big Hand forever. To try the Club, tap Redeem Code and enter \(Club.bigHandOfferCode) for your first month at no charge.")
+                            Text("Big Hand owners keep The Big Hand forever. The Club adds the monthly chest, the Club row of every Season, every yard, the almanac and backup on top.")
                                 .font(UI.font(11, .bold)).foregroundStyle(UI.link).multilineTextAlignment(.center)
                         }
                         if !pro.unlocked && !club.active {

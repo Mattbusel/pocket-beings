@@ -62,8 +62,21 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
             if club.active { Backup.save() }
         }
+        .onOpenURL { url in open(url) }
         .task { await demo() }
         .task { await tour() }
+    }
+
+    /// pocketbeings://season (In-App Events), gift, album, widgets, almanac, club.
+    private func open(_ url: URL) {
+        guard url.scheme == "pocketbeings" else { return }
+        let host = url.host ?? ""
+        if host == "club" { pro.showClub = true; return }
+        let map: [String: Panel] = ["season": .season, "gift": .gift, "album": .album, "widgets": .widgets, "almanac": .almanac]
+        guard let p = map[host] else { return }
+        if model.town == nil { if model.hasSavedTown { model.continueTown() } else { model.newTown() } }
+        model.demoPanel = nil
+        Task { try? await Task.sleep(for: .seconds(0.5)); model.demoPanel = p }
     }
 
     /// One place that tells everyone who has what.

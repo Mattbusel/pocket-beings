@@ -262,6 +262,8 @@ final class Player: ObservableObject {
     @discardableResult
     func check(town: Town) -> Bool {
         checkStamps(town: town)
+        // Screenshots and the preview keep today's wish open: no banner over the shot.
+        if demo { return false }
         guard var w = wish, w.day == Self.today, !w.done, Wishes.check(w, town: town) else { return false }
         w.done = true
         wish = w

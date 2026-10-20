@@ -122,7 +122,7 @@ jobs:
       # Recording starts on the home screen, then the app is launched.
       - name: Record the review video
         if: ${{ inputs.action == 'review_video' || inputs.action == 'preview' }}
-        timeout-minutes: 20
+        timeout-minutes: 40
         run: |
           set -o pipefail
           udid=$(xcrun simctl list devices available | grep "$SIM_NAME (" | head -1 | grep -oE "[0-9A-F-]{36}")

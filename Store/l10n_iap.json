@@ -1,0 +1,518 @@
+{
+  "en-GB": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (Monthly)",
+      "Monthly chest, double gifts, every yard, Club Season."
+    ],
+    "club.yearly": [
+      "Town Club (Yearly)",
+      "Monthly chests all year, double gifts, every yard."
+    ],
+    "miracles5": [
+      "Miracle Jar",
+      "Five miracles to drop on your town."
+    ],
+    "invites3": [
+      "Invitations",
+      "Three invitations: name a stranger and they move in."
+    ],
+    "boost": [
+      "Season Boost",
+      "Fifteen Season stars: one tier of the track, now."
+    ],
+    "yard.snow": [
+      "Snow Day Yard",
+      "A snowy yard for your town and its own app icon."
+    ],
+    "yard.night": [
+      "Night Market Yard",
+      "A lantern-lit night yard and its own app icon."
+    ],
+    "yard.beach": [
+      "Beach Town Yard",
+      "A sandy beach yard and its own app icon."
+    ],
+    "yard.mars": [
+      "Mars Colony Yard",
+      "A red Martian yard and its own app icon."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Four new meddles, a faster hand, name your town."
+    ]
+  },
+  "en-AU": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (Monthly)",
+      "Monthly chest, double gifts, every yard, Club Season."
+    ],
+    "club.yearly": [
+      "Town Club (Yearly)",
+      "Monthly chests all year, double gifts, every yard."
+    ],
+    "miracles5": [
+      "Miracle Jar",
+      "Five miracles to drop on your town."
+    ],
+    "invites3": [
+      "Invitations",
+      "Three invitations: name a stranger and they move in."
+    ],
+    "boost": [
+      "Season Boost",
+      "Fifteen Season stars: one tier of the track, now."
+    ],
+    "yard.snow": [
+      "Snow Day Yard",
+      "A snowy yard for your town and its own app icon."
+    ],
+    "yard.night": [
+      "Night Market Yard",
+      "A lantern-lit night yard and its own app icon."
+    ],
+    "yard.beach": [
+      "Beach Town Yard",
+      "A sandy beach yard and its own app icon."
+    ],
+    "yard.mars": [
+      "Mars Colony Yard",
+      "A red Martian yard and its own app icon."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Four new meddles, a faster hand, name your town."
+    ]
+  },
+  "en-CA": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (Monthly)",
+      "Monthly chest, double gifts, every yard, Club Season."
+    ],
+    "club.yearly": [
+      "Town Club (Yearly)",
+      "Monthly chests all year, double gifts, every yard."
+    ],
+    "miracles5": [
+      "Miracle Jar",
+      "Five miracles to drop on your town."
+    ],
+    "invites3": [
+      "Invitations",
+      "Three invitations: name a stranger and they move in."
+    ],
+    "boost": [
+      "Season Boost",
+      "Fifteen Season stars: one tier of the track, now."
+    ],
+    "yard.snow": [
+      "Snow Day Yard",
+      "A snowy yard for your town and its own app icon."
+    ],
+    "yard.night": [
+      "Night Market Yard",
+      "A lantern-lit night yard and its own app icon."
+    ],
+    "yard.beach": [
+      "Beach Town Yard",
+      "A sandy beach yard and its own app icon."
+    ],
+    "yard.mars": [
+      "Mars Colony Yard",
+      "A red Martian yard and its own app icon."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Four new meddles, a faster hand, name your town."
+    ]
+  },
+  "es-MX": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (mensual)",
+      "Cofre mensual, regalos dobles y todos los patios."
+    ],
+    "club.yearly": [
+      "Town Club (anual)",
+      "Cofres todo el año, regalos dobles, todos los patios."
+    ],
+    "miracles5": [
+      "Frasco de Milagros",
+      "Cinco milagros para lanzar sobre tu pueblo."
+    ],
+    "invites3": [
+      "Invitaciones",
+      "Tres invitaciones: nombra a alguien y se muda."
+    ],
+    "boost": [
+      "Impulso de Temporada",
+      "Quince estrellas de Temporada: un nivel, ya."
+    ],
+    "yard.snow": [
+      "Patio Día de Nieve",
+      "Un patio nevado y su propio ícono de app."
+    ],
+    "yard.night": [
+      "Patio Mercado Nocturno",
+      "Un patio nocturno con faroles y su propio ícono."
+    ],
+    "yard.beach": [
+      "Patio Pueblo Playero",
+      "Un patio de playa y su propio ícono de app."
+    ],
+    "yard.mars": [
+      "Patio Colonia en Marte",
+      "Un patio marciano rojo y su propio ícono de app."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Cuatro intervenciones nuevas, mano rápida y nombre."
+    ]
+  },
+  "es-ES": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (mensual)",
+      "Cofre mensual, regalos dobles y todos los patios."
+    ],
+    "club.yearly": [
+      "Town Club (anual)",
+      "Cofres todo el año, regalos dobles, todos los patios."
+    ],
+    "miracles5": [
+      "Frasco de Milagros",
+      "Cinco milagros para lanzar sobre tu pueblo."
+    ],
+    "invites3": [
+      "Invitaciones",
+      "Tres invitaciones: nombra a alguien y se muda."
+    ],
+    "boost": [
+      "Impulso de Temporada",
+      "Quince estrellas de Temporada: un nivel, ya."
+    ],
+    "yard.snow": [
+      "Patio Día de Nieve",
+      "Un patio nevado y su propio icono de app."
+    ],
+    "yard.night": [
+      "Patio Mercado Nocturno",
+      "Un patio nocturno con faroles y su propio icono."
+    ],
+    "yard.beach": [
+      "Patio Pueblo Playero",
+      "Un patio de playa y su propio icono de app."
+    ],
+    "yard.mars": [
+      "Patio Colonia en Marte",
+      "Un patio marciano rojo y su propio icono de app."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Cuatro intervenciones nuevas, mano rápida y nombre."
+    ]
+  },
+  "de-DE": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (monatlich)",
+      "Monatstruhe, doppelte Geschenke, alle Höfe."
+    ],
+    "club.yearly": [
+      "Town Club (jährlich)",
+      "Ein Jahr Club-Truhen, doppelte Geschenke, alle Höfe."
+    ],
+    "miracles5": [
+      "Wunderglas",
+      "Fünf Wunder für dein Dorf."
+    ],
+    "invites3": [
+      "Einladungen",
+      "Drei Einladungen: Fremden benennen, er zieht ein."
+    ],
+    "boost": [
+      "Saison-Boost",
+      "Fünfzehn Saisonsterne: sofort eine Stufe weiter."
+    ],
+    "yard.snow": [
+      "Hof: Schneetag",
+      "Verschneiter Hof plus eigenes App-Symbol."
+    ],
+    "yard.night": [
+      "Hof: Nachtmarkt",
+      "Nachthof mit Laternen plus eigenes App-Symbol."
+    ],
+    "yard.beach": [
+      "Hof: Strandstadt",
+      "Sandiger Strandhof plus eigenes App-Symbol."
+    ],
+    "yard.mars": [
+      "Hof: Marskolonie",
+      "Roter Marshof plus eigenes App-Symbol."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Vier neue Eingriffe, schnellere Hand, Dorfname."
+    ]
+  },
+  "fr-FR": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (mensuel)",
+      "Coffre mensuel, cadeaux doublés, toutes les cours."
+    ],
+    "club.yearly": [
+      "Town Club (annuel)",
+      "Un coffre par mois toute l'année, cadeaux doublés."
+    ],
+    "miracles5": [
+      "Bocal à Miracles",
+      "Cinq miracles à lâcher sur votre village."
+    ],
+    "invites3": [
+      "Invitations",
+      "Trois invitations : nommez un inconnu, il emménage."
+    ],
+    "boost": [
+      "Coup de Pouce de Saison",
+      "Quinze étoiles de Saison : un palier, tout de suite."
+    ],
+    "yard.snow": [
+      "Cour Jour de Neige",
+      "Une cour enneigée et son icône d'app."
+    ],
+    "yard.night": [
+      "Cour Marché de Nuit",
+      "Une cour de nuit aux lanternes et son icône d'app."
+    ],
+    "yard.beach": [
+      "Cour Ville Balnéaire",
+      "Une cour de plage et son icône d'app."
+    ],
+    "yard.mars": [
+      "Cour Colonie Martienne",
+      "Une cour martienne rouge et son icône d'app."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Quatre interventions, main rapide, nom du village."
+    ]
+  },
+  "pt-BR": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (mensal)",
+      "Baú mensal, presentes em dobro, todos os quintais."
+    ],
+    "club.yearly": [
+      "Town Club (anual)",
+      "Baús o ano todo, presentes em dobro, todos os quintais."
+    ],
+    "miracles5": [
+      "Pote de Milagres",
+      "Cinco milagres para soltar na sua cidade."
+    ],
+    "invites3": [
+      "Convites",
+      "Três convites: dê nome a um estranho e ele se muda."
+    ],
+    "boost": [
+      "Impulso de Temporada",
+      "Quinze estrelas de Temporada: um nível, agora."
+    ],
+    "yard.snow": [
+      "Quintal Dia de Neve",
+      "Um quintal com neve e um ícone de app próprio."
+    ],
+    "yard.night": [
+      "Quintal Feira Noturna",
+      "Um quintal noturno com lanternas e ícone próprio."
+    ],
+    "yard.beach": [
+      "Quintal Cidade de Praia",
+      "Um quintal de praia e um ícone de app próprio."
+    ],
+    "yard.mars": [
+      "Quintal Colônia em Marte",
+      "Um quintal marciano vermelho e ícone próprio."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Quatro intervenções novas, mão rápida, nome da cidade."
+    ]
+  },
+  "it": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (mensile)",
+      "Forziere mensile, regali doppi, tutti i cortili."
+    ],
+    "club.yearly": [
+      "Town Club (annuale)",
+      "Forzieri tutto l'anno, regali doppi, tutti i cortili."
+    ],
+    "miracles5": [
+      "Barattolo di Miracoli",
+      "Cinque miracoli da far cadere sul tuo paese."
+    ],
+    "invites3": [
+      "Inviti",
+      "Tre inviti: dai un nome a uno sconosciuto e arriva."
+    ],
+    "boost": [
+      "Spinta Stagionale",
+      "Quindici stelle della Stagione: un livello, subito."
+    ],
+    "yard.snow": [
+      "Cortile Giorno di Neve",
+      "Un cortile innevato e la sua icona dell'app."
+    ],
+    "yard.night": [
+      "Cortile Mercato Notturno",
+      "Un cortile notturno con lanterne e la sua icona."
+    ],
+    "yard.beach": [
+      "Cortile Paese di Mare",
+      "Un cortile di spiaggia e la sua icona dell'app."
+    ],
+    "yard.mars": [
+      "Cortile Colonia su Marte",
+      "Un cortile marziano rosso e la sua icona dell'app."
+    ],
+    "pro": [
+      "The Big Hand",
+      "Quattro nuovi interventi, mano rapida, nome al paese."
+    ]
+  },
+  "ja": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club(月額)",
+      "毎月のチェスト、プレゼント2倍、すべての庭、Clubシーズン。"
+    ],
+    "club.yearly": [
+      "Town Club(年額)",
+      "1年間毎月のチェスト、プレゼント2倍、すべての庭。"
+    ],
+    "miracles5": [
+      "奇跡の瓶",
+      "町に落とせる奇跡が5回分。"
+    ],
+    "invites3": [
+      "招待状",
+      "招待状3通。名前をつければ見知らぬ誰かが引っ越してきます。"
+    ],
+    "boost": [
+      "シーズンブースト",
+      "シーズンスター15個。トラックを今すぐ1段階進めます。"
+    ],
+    "yard.snow": [
+      "雪の日の庭",
+      "町のための雪の庭と専用アプリアイコン。"
+    ],
+    "yard.night": [
+      "ナイトマーケットの庭",
+      "ちょうちんが灯る夜の庭と専用アプリアイコン。"
+    ],
+    "yard.beach": [
+      "ビーチタウンの庭",
+      "砂浜の庭と専用アプリアイコン。"
+    ],
+    "yard.mars": [
+      "火星コロニーの庭",
+      "赤い火星の庭と専用アプリアイコン。"
+    ],
+    "pro": [
+      "The Big Hand",
+      "新しいちょっかい4種、すばやい手、町の名前付け。"
+    ]
+  },
+  "ko": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club (월간)",
+      "매달 상자, 선물 두 배, 모든 마당, Club 시즌."
+    ],
+    "club.yearly": [
+      "Town Club (연간)",
+      "1년 내내 매달 상자, 선물 두 배, 모든 마당."
+    ],
+    "miracles5": [
+      "기적 단지",
+      "마을에 내릴 기적 5개."
+    ],
+    "invites3": [
+      "초대장",
+      "초대장 3장: 이름을 지으면 낯선 사람이 이사 와요."
+    ],
+    "boost": [
+      "시즌 부스트",
+      "시즌 별 15개: 트랙 한 단계를 지금 바로."
+    ],
+    "yard.snow": [
+      "눈 오는 날 마당",
+      "마을을 위한 눈 덮인 마당과 전용 앱 아이콘."
+    ],
+    "yard.night": [
+      "야시장 마당",
+      "등불이 켜진 밤 마당과 전용 앱 아이콘."
+    ],
+    "yard.beach": [
+      "해변 마을 마당",
+      "모래사장 마당과 전용 앱 아이콘."
+    ],
+    "yard.mars": [
+      "화성 기지 마당",
+      "붉은 화성 마당과 전용 앱 아이콘."
+    ],
+    "pro": [
+      "The Big Hand",
+      "새 참견 네 가지, 더 빠른 손, 마을 이름 짓기."
+    ]
+  },
+  "zh-Hans": {
+    "group": "Town Club",
+    "club.monthly": [
+      "Town Club(月度)",
+      "每月宝箱、礼物翻倍、所有庭院、Club 赛季。"
+    ],
+    "club.yearly": [
+      "Town Club(年度)",
+      "全年每月宝箱、礼物翻倍、所有庭院。"
+    ],
+    "miracles5": [
+      "神迹罐",
+      "五次神迹,随时降临你的小镇。"
+    ],
+    "invites3": [
+      "邀请函",
+      "三张邀请函:起个名字,陌生人就搬进来。"
+    ],
+    "boost": [
+      "赛季加速",
+      "十五颗赛季星星:立刻提升一级进度。"
+    ],
+    "yard.snow": [
+      "雪天庭院",
+      "为小镇换上雪景庭院和专属 App 图标。"
+    ],
+    "yard.night": [
+      "夜市庭院",
+      "灯笼点亮的夜间庭院和专属 App 图标。"
+    ],
+    "yard.beach": [
+      "海滨小镇庭院",
+      "沙滩庭院和专属 App 图标。"
+    ],
+    "yard.mars": [
+      "火星殖民地庭院",
+      "红色火星庭院和专属 App 图标。"
+    ],
+    "pro": [
+      "The Big Hand",
+      "四种新捣乱方式、更快的手、给小镇起名。"
+    ]
+  }
+}

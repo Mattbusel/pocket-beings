@@ -78,6 +78,11 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Light
+        # pocketbeings://season, gift, album, widgets, club: In-App Events and Shortcuts open the right window.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.mattbusel.pocketbeings
+            CFBundleURLSchemes:
+              - pocketbeings
         # No custom cryptography. Declared so an upload never parks in
         # "Missing Compliance".
         ITSAppUsesNonExemptEncryption: false

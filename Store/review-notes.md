@@ -1,48 +1,25 @@
 # App Review notes
 
 Pasted into the "Notes" field of the App Review Information section. Also
-supplied programmatically by `Store/listing.py review-details`.
+supplied programmatically by `Store/listing.py review-details`. Keep under 4000 characters.
 
 ---
 
-No account, login or network connection is required. Tap NEW TOWN and the game
-starts immediately.
+No account, login or network connection is required. Tap NEW TOWN and the game starts immediately.
 
-HOW TO PLAY: seven cartoon characters live in a town and act on their own every
-couple of seconds (stealing, giving gifts, founding businesses, running for
-office, printing money, going to jail). Their actions appear in the newspaper
-panel. Tap any character in the yard to open its file and use one of five
-actions on it (give coins, rob, jail, crown, exile). Close the app and reopen it
-to see a summary of what happened while it was closed.
+HOW TO PLAY: seven original cartoon characters live in a town and act on their own every couple of seconds (steal, give gifts, found businesses, run for office, print money, go to jail). Their actions appear in the newspaper panel. Tap a character in the yard to open its file and use an action on it. START (bottom left) opens every window.
 
-CONTENT: every character is an original, made-up cartoon. No real person,
-company, place, brand or event appears or is referenced. There is no violence,
-blood, weaponry or peril: "jail" is a padlock icon and "rob" moves cartoon coins
-between characters. There is no gambling for real money; the "all in" event is a
-coin flip with the game's own pretend coins and cannot be purchased or cashed
-out. No user-generated content, no chat, no web access, no advertising.
+NEW IN 1.2 (all reachable from START): Daily gift (7-day calendar of miracles and invitations; it also opens itself once a day), Wish of the day, the monthly Season (10-tier track, three weekly challenges), Miracles, Invite a stranger, Town laws, Stamp album (24 stamps earned from town events), Hall of records, Town almanac (charts), Yards, Widgets (a gallery of the Home Screen, Lock Screen and Control Center widgets), Town Club, The Big Hand, Settings. Siri/Shortcuts: "Pocket Beings town report".
 
-AGE RATING: submitted as 4+ (simulated gambling: none, since nothing is wagered
-by the player and nothing has value).
+IN-APP PURCHASES:
+1. The Big Hand (com.mattbusel.pocketbeings.pro, non-consumable, already approved and unchanged).
+2. Town Club, auto-renewable subscription group with two plans: com.mattbusel.pocketbeings.club.monthly and com.mattbusel.pocketbeings.club.yearly (yearly has a one-week free trial for new subscribers). Open it from the title screen link "The Town Club: more every month", START > Town Club, or by tapping any locked item. The window shows price, period, trial terms and auto-renewal text, Terms of Use (Apple standard EULA) and Privacy Policy links, RESTORE, REDEEM CODE and, for members, MANAGE SUBSCRIPTION. Members get: everything in The Big Hand while subscribed, a Club Chest each calendar month (25 miracles + 5 invitations, button in the Club window), doubled daily gifts, the Club row of each Season, two Club miracles (Tax Holiday, Crime Wave), every yard, the Town almanac charts, and iCloud key-value backup (START > Settings). Everything that was free stays free.
+3. Consumables, can be bought again: Miracle Jar (miracles5, 5 miracles; START > Miracles, bottom row), Invitations (invites3; START > Invite a stranger, bottom row), Season Boost (boost, 15 Season stars = one tier; START > the Season, bottom row).
+4. Non-consumables: four yards (yard.snow, yard.night, yard.beach, yard.mars; START > Yards). Each repaints the yard and widgets and switches the app icon.
+Every purchase gives exactly what its row says. Nothing is random. Restore: START > Settings > RESTORE PURCHASES.
 
-PRIVACY: no data of any kind is collected. No analytics, no crash reporting, no
-advertising identifier, no server. The town is saved as one JSON file in the
-app's own Documents folder on the device.
+CONTENT: every character is an original, made-up cartoon. No real person, company, place, brand or event. No violence or blood: "jail" is a padlock icon and "rob" moves pretend coins. "All in" is a coin flip between characters with the game's own pretend coins; the player never wagers anything and nothing can be cashed out. No user-generated content shared with anyone (invited characters' names stay on the device), no chat, no web views, no ads.
 
-MONETISATION (1.1): the app is now free. One optional non-consumable in-app
-purchase, "The Big Hand" (com.mattbusel.pocketbeings.pro), adds four more
-actions (Pardon, Frame, Deputise, Rain 20), a 2 second cooldown instead of 5,
-and renaming the town. Everything in 1.0 stays free. To see the paywall: on the
-title screen tap the underlined link "The Big Hand: meddle harder"; or in a town
-tap any character and tap one of the four locked actions; or tap the locked
-RENAME at the bottom of the town window. Restore is the RESTORE button on the
-paywall window. People who bought 1.0 are recognised through AppTransaction and
-unlocked automatically. No subscription, no advertising.
+PRIVACY: no data collected. No analytics, crash reporting, advertising identifier or server. The town is a JSON file in the app group container (shared with the app's own widgets). Town Club members' backup goes only to their own iCloud key-value store. Notifications are local and optional (Settings).
 
-INFORMATION REQUESTED UNDER GUIDELINE 2.1 (new account):
-PURPOSE / AUDIENCE: an offline toy town. Seven original cartoon characters act on their own (steal, gift, found businesses, run for office, print money, go to jail) and the player watches and meddles. Entertainment for casual players of any age; rated 4+.
-SETUP: none. Tap NEW TOWN. Everything is reachable from that one screen.
-EXTERNAL SERVICES: none. No network requests, no data providers, no auth, no payments, no AI service, no analytics, no crash reporting, no ads, no third-party SDKs. Only SwiftUI, SpriteKit, Foundation and Combine. Behaviour comes from a local deterministic rules engine; the save is one JSON file in the app's Documents folder.
-REGIONAL DIFFERENCES: none. Identical in every region.
-REGULATED INDUSTRY / PROTECTED MATERIAL: not applicable. All characters, names, art, text and code are original. Coins have no real value and nothing is wagered by the player.
-A screen recording showing launch, NEW TOWN, autonomous characters, the newspaper, and the Crown and Jail actions was supplied in the App Review message thread.
+EXTERNAL SERVICES: none besides StoreKit and the user's own iCloud key-value store.

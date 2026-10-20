@@ -110,7 +110,7 @@ def prices(sid, price):
     for pp in points:
         r = asc.call("POST", "/v1/subscriptionPrices", {"data": {"type": "subscriptionPrices", "attributes": {"startDate": None, "preserveCurrentPrice": False},
                      "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sid}},
-                                       "subscriptionPricePoint": {"data": {"type": "subscriptionPricePoints", "id": pp}}}}}, quiet=True)
+                                       "subscriptionPricePoint": {"data": {"type": "subscriptionPricePoints", "id": pp}}}}}, quiet=ok > 0)
         ok += 1 if r is not None else 0
     print(f"  prices: {ok}/{len(points)} territories at USD {price} equivalent")
 
